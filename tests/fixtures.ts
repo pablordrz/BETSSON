@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, selectors } from '@playwright/test';
 import { contextOptionsFor, loginToStorageState, type StorageState } from '../src/auth/login';
 import { cdpUrl, savedSession } from '../src/auth/session';
 import { applyTrustedTraffic } from '../src/auth/trusted-traffic';
@@ -101,6 +101,15 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     if (cdpUrl()) {
       // The player's own browser profile: already logged in, game session started by the player.
       const context = browser.contexts()[0];
+      // Fresh profile → the checker logs in itself, in that real browser (outside the trace: no password in it)
+      selectors.setTestIdAttribute('data-test-id');
+      const lobby = new BetssonSite(context.pages()[0] ?? (await context.newPage()), market);
+      await lobby.open(market.providerPath);
+      if (!(await lobby.isLoggedIn())) {
+        const creds = credentialsFor(market.id, account);
+        if (!creds) testInfo.skip(true, `${market.site}: no credentials for the ${account} account`);
+        await lobby.login(creds!);
+      }
       const traced = await context.tracing.start({ screenshots: true, snapshots: true }).then(
         () => true,
         () => false, // already traced by Playwright

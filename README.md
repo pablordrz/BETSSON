@@ -34,22 +34,29 @@ npm run unit              # offline tests of the pure parsing / vision helpers
 Reports: `reports/index.html` (pass/fail per check and scenario) and `reports/playwright/` (screenshots with OCR regions
 drawn, trace and video per test).
 
-## Player mode (recommended): run inside a browser you opened
+## Run in Brave (recommended)
 
 Betsson's fraud detection rejects logins from Playwright-launched browsers ("Actualiza la página y vuelve a intentarlo
-en breve"). The checker therefore attaches to a normal browser the player opened, over CDP:
+en breve"). The checker therefore drives a normal **Brave** (or Chrome) window over CDP.
+
+Setup once: `npm ci`, `cp .env.example .env`, fill in `FUNDED_USER` / `FUNDED_PASS` and set
+`CDP_URL=http://127.0.0.1:9222` in `.env`.
+
+**From scratch** (the checker does the whole journey: cookies, login, provider page, game):
 
 ```bash
-npm run browser   # opens Brave (or Chrome) with its own profile in .cache/ and DevTools on 127.0.0.1:9222
-                  # set CDP_URL=http://127.0.0.1:9222 in .env
-# in that window, BY HAND: log in, open a Pragmatic Play game, accept the game-session dialogs and enter Real Play
-npm run calibrate # NO spin: attaches to the open game tab and dumps what the checker sees
-npm test          # scenarios run on the open game tab
+npm run browser:fresh  # opens Brave with an EMPTY profile (.cache/browser-profile) and DevTools on 127.0.0.1:9222
+npm run calibrate      # NO spin: logs in, opens the game, dumps what the checker sees
+npm test               # both scenarios (⚠ Real Play spin)
 ```
 
-- The login and the Spanish **game-session / responsible-gambling dialogs are always done by the player**, never automated.
-- If no game tab is open, the checker stops and asks for it instead of navigating.
-- `npm run login` saves the session of that browser to `.auth/` (gitignored) for runs without CDP.
+Keep the Brave window open while the tests run. Brave is found automatically on Windows / macOS / Linux; set
+`BROWSER_PATH` to use another Chromium-based browser (e.g. Chrome).
+
+**Reusing a game you opened by hand:** `npm run browser` (keeps the profile), open a Pragmatic Play game in Real Play
+in that window, then run the tests: the checker attaches to that tab instead of navigating.
+
+- `npm run login` saves the browser's session to `.auth/` (gitignored) for runs without CDP.
 - Optional `EXTRA_HTTP_HEADERS` (JSON, from the mentors) is added only to requests to the Betsson domain.
 
 ## Calibration (first thing once you have the accounts)

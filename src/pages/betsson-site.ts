@@ -1,5 +1,4 @@
 import type { Locator, Page } from '@playwright/test';
-import { cdpUrl } from '../auth/session';
 import type { Credentials } from '../config/env';
 import type { GameLayout } from '../config/game-layout';
 import type { MarketConfig } from '../config/markets';
@@ -156,11 +155,7 @@ export class BetssonSite {
 
   /** Attaches to a game the player opened (CDP mode), otherwise launches it from the provider page. */
   async openGame(layout: GameLayout): Promise<LaunchResult> {
-    if (this.openGameSlug()) return this.attachToOpenGame(layout);
-    if (cdpUrl()) {
-      throw new Error('Player mode (CDP_URL): open a Pragmatic Play game in Real Play by hand in the browser first, then run again.');
-    }
-    return this.launchGame(layout);
+    return this.openGameSlug() ? this.attachToOpenGame(layout) : this.launchGame(layout);
   }
 
   /**

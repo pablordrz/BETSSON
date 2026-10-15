@@ -26,6 +26,8 @@ if (!exe) {
   process.exit(1);
 }
 const profile = path.resolve('.cache', 'browser-profile');
+// --fresh: start from an empty profile (no cookies, no session) so the checker does the whole journey itself
+if (process.argv.includes('--fresh')) fs.rmSync(profile, { recursive: true, force: true });
 fs.mkdirSync(profile, { recursive: true });
 spawn(exe, [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${profile}`, '--no-first-run', 'https://www.betsson.es/inicio'], {
   detached: true,

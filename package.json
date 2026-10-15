@@ -6,6 +6,7 @@
   "scripts": {
     "test": "playwright test --project=betsson.es",
     "browser": "node scripts/open-browser.cjs",
+    "browser:fresh": "node scripts/open-browser.cjs --fresh",
     "login": "playwright test --project=login-betsson.es",
     "calibrate": "playwright test --project=calibrate-betsson.es",
     "unit": "playwright test --project=unit",

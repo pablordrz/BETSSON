@@ -10,4 +10,4 @@ all-blob-reports/
 site/
 calibration/
 .cache/
-.auth/
+.auth*/
