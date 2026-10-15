@@ -38,7 +38,7 @@ test('Scenario 2 — insufficient balance', async ({ steps }) => {
 
   // 5–6. Attempt a spin: rejected, with a visible message in the expected language
   const { noise } = (await steps.must(measureIdle, { game })).data;
-  await steps.run(attemptRejectedSpin, { game, noise });
+  await steps.run(attemptRejectedSpin, { game, noise, credit: before.credit });
   await steps.run(findGameMessage, { game, kind: 'insufficientBalance' });
 
   // Balances afterwards: unchanged in the game and in Betsson

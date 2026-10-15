@@ -171,11 +171,11 @@ export const findGameMessage = defineStep<{ game: GameScreen; kind: 'insufficien
  * Attempt a spin that SHOULD be rejected (no usable balance): press spin once, like the player, and validate
  * the reels did NOT start. Never retried.
  */
-export const attemptRejectedSpin = defineStep<{ game: GameScreen; noise: number }, { peak: number; action: string }>({
+export const attemptRejectedSpin = defineStep<{ game: GameScreen; noise: number; credit?: Money }, { peak: number; action: string }>({
   id: 'game.spinRejected',
-  title: 'Attempted spin was rejected (reels did not spin)',
+  title: 'Attempted spin was rejected (not completed as a paid spin)',
   retryable: false,
-  async run({ layout, controls, log }, { game, noise }) {
+  async run({ ocr, market, layout, controls, log }, { game, noise, credit }) {
     let action = 'none';
     for (const a of controls.spin) {
       const r = await a.perform(game);
@@ -186,7 +186,16 @@ export const attemptRejectedSpin = defineStep<{ game: GameScreen; noise: number 
       }
     }
     const m = await waitForMotion(reelsOf(game, layout), { threshold: Math.max(0.04, noise * 3), timeoutMs: 2500, intervalMs: 150 });
-    log(m.moved ? 'reels MOVED' : 'reels did not move', { peak: pct(m.peak) });
-    return { ok: action !== 'none' && !m.moved, detail: `${action} · max screen change ${pct(m.peak)}${m.moved ? ' · reels MOVED' : ''}`, data: { peak: m.peak, action } };
+    // A screen change alone is not a spin: the "insufficient funds" message itself pops up over the reels.
+    // The proof of a rejected spin is that nothing was charged: CREDIT on screen is the same as before.
+    const now = credit ? (await readHud(game, ocr, market, layout)).credit?.value : undefined;
+    const charged = !!credit && !!now && !moneyEq(now.amount, credit.amount);
+    const rejected = action !== 'none' && (credit ? !!now && !charged : !m.moved);
+    log(m.moved ? 'screen changed after pressing spin' : 'screen did not change', { peak: pct(m.peak), creditBefore: credit?.amount, creditAfter: now?.amount });
+    return {
+      ok: rejected,
+      detail: `${action} · max screen change ${pct(m.peak)}${credit ? ` · CREDIT ${fmt(credit)} → ${fmt(now ?? null)}${charged ? ' · CHARGED' : ' · not charged'}` : m.moved ? ' · reels MOVED' : ''}`,
+      data: { peak: m.peak, action },
+    };
   },
 });
