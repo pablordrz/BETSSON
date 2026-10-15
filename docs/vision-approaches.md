@@ -10,6 +10,81 @@ node scripts/bench-vision.cjs        # offline, sin navegador ni dinero (≈ 1 m
 
 Lo que garantizan las mediciones lo comprueban tests automáticos en `npm run unit` (`tests/unit/vision-approaches.spec.ts`).
 
+## Conclusiones
+
+1. **No hay una técnica mejor para todo: cada problema tiene la suya**, elegida por datos y no por moda.
+   - Para **encontrar botones**, comparar la imagen con el icono (plantilla) y buscar círculos (Hough).
+   - Para **leer números**, OCR.
+   - Para **saber si algo se mueve**, diferencia de fotogramas.
+2. **Botón de tirar: combinar dos técnicas supera a cada una por separado.**
+   - La **plantilla** es la más fiable (9/9, error 0,08 radios), pero lenta la primera vez: 2,6 s.
+   - **Hough** es igual de fiable (9/9, 0 falsos positivos) y 50× más rápido (56 ms), pero no sabe si es *el* icono de Pragmatic.
+   - **Juntas** (Hough dice dónde y la plantilla confirma): **9/9, 0 falsos positivos y 0,3 s.**
+3. **La segmentación no compensa aquí.** Es la más precisa cuando acierta (0,02 radios), pero solo acierta 3/9: el botón se funde con el dibujo oscuro que tiene detrás.
+4. **Lo que más importa no es acertar, sino no equivocarse.** Un falso positivo es un clic donde no hay botón. Todas las técnicas que usamos tienen **0 falsos positivos**, y además **el clic nunca es la prueba**: la pantalla tiene que mostrar que la tirada empezó.
+5. **Leer el saldo: el preprocesado importa más que el motor de OCR.** El mismo Tesseract pasa de **0/2 a 2/2 lecturas correctas** solo con quedarse con el texto brillante (umbral 210), y además es más rápido (hasta 3,7×: 854 → 231 ms).
+6. **Para el movimiento basta lo simple**: la diferencia de fotogramas separa «nada pasa» (≤ 0,02) de «algo cambió» (0,25) con un margen de más de 10×.
+7. **La IA entrenada (YOLO, modelos de visión-lenguaje) no hace falta para este alcance.** Para los botones de Pragmatic, la visión clásica ya da 9/9 sin entrenar nada y en milisegundos. Quedan como **ampliación** para juegos de otros proveedores: cada una entraría como un detector más en la cascada (`ScreenTarget`), sin tocar los escenarios.
+
+## Gráficas (datos medidos con `node scripts/bench-vision.cjs`)
+
+**Botón de tirar — fiabilidad frente a velocidad.** Arriba a la derecha es lo ideal. El eje horizontal va en escala logarítmica: de 2,6 s a 41 ms.
+
+```mermaid
+quadrantChart
+    title Botón de tirar: fiabilidad frente a velocidad
+    x-axis Lento --> Rápido
+    y-axis Poco fiable --> Fiable
+    quadrant-1 Lo ideal
+    quadrant-2 Fiable pero lento
+    quadrant-3 Descartar
+    quadrant-4 Rápido pero poco fiable
+    Plantilla ZNCC: [0.03, 0.97]
+    Plantilla guiada por Hough: [0.49, 0.94]
+    Hough: [0.86, 0.97]
+    Segmentación: [0.93, 0.33]
+```
+
+**Botón de tirar — aciertos** (de 9 casos con botón: 3 fotogramas reales × 3 tamaños). Ninguna técnica dio falsos positivos en los 3 casos sin botón.
+
+```mermaid
+xychart-beta
+    title "Aciertos encontrando el botón de tirar (de 9)"
+    x-axis ["Plantilla", "Plantilla + Hough", "Hough", "Segmentación"]
+    y-axis "Aciertos" 0 --> 9
+    bar [9, 9, 9, 3]
+```
+
+**Botón de tirar — tiempo de la primera búsqueda** (mediana, en ms; menos es mejor).
+
+```mermaid
+xychart-beta
+    title "Tiempo de la primera búsqueda (ms, mediana)"
+    x-axis ["Plantilla", "Plantilla + Hough", "Hough", "Segmentación"]
+    y-axis "ms" 0 --> 2700
+    bar [2625, 311, 56, 41]
+```
+
+**Leer CRÉDITO y APUESTA — lecturas correctas** (de 2 franjas del HUD), según el preprocesado de la imagen.
+
+```mermaid
+xychart-beta
+    title "Lecturas correctas del HUD (de 2)"
+    x-axis ["OCR normal", "Binarizado >= 180", "Binarizado >= 210"]
+    y-axis "Correctas" 0 --> 2
+    bar [0, 1, 2]
+```
+
+**Movimiento — fracción de píxeles que cambian.** El umbral para decir «se mueve» queda entre el ruido y el cambio real.
+
+```mermaid
+xychart-beta
+    title "Diferencia entre fotogramas (fracción de píxeles)"
+    x-axis ["Mismo fotograma", "Ruido de compresión", "Temblor 1-2 px", "Cambio real"]
+    y-axis "Cambio" 0 --> 0.3
+    bar [0, 0, 0.021, 0.249]
+```
+
 ## Resumen
 
 | Problema | Técnica elegida | Por qué (dato medido) |
