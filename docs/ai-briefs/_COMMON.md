@@ -33,7 +33,18 @@ npx tsc --noEmit          # 0 errores
 npm run unit              # todos en verde
 npm run browser:fresh     # Brave limpio (dejarlo abierto)
 npm run calibrate         # en vivo, SIN tirada
+npm run all               # TODO seguido (solo D, dinero real): tsc → unit → escenario 1 → escenario 2 → informe unido
 ```
+
+**Cuentas** (solo en `.env`, nunca en el repo): `FUNDED_USER/PASS`, la cuenta **con saldo** (escenario 1), y `EMPTY_USER/PASS`, la cuenta **sin saldo** (escenario 2). Las credenciales se pasan por privado.
+
+## Escenarios que tiene que cumplir el checker
+
+| Escenario | Cuenta | Qué tiene que pasar (validado en pantalla) |
+|---|---|---|
+| **1 — Tirada completada** | con saldo | entra, lee el saldo, la apuesta y la moneda (EUR), tira con la apuesta mínima, la tirada empieza y termina, y `saldo después = antes − apuesta + premio` en el juego **y** en Betsson |
+| **2 — Usuario sin saldo: la tirada queda BLOQUEADA** | **sin saldo** | inicia sesión con la cuenta sin saldo, entra en el juego y lee su saldo. Al intentar tirar, **la tirada se rechaza** (los rodillos no giran), el jugador ve el **mensaje de saldo insuficiente en español**, y **ni el saldo del juego ni el de Betsson cambian** |
+| **Protección (todas las pruebas)** | cualquiera | **antes de cualquier tirada real**, `money.preflight` comprueba que CRÉDITO ≥ APUESTA y saldo de Betsson ≥ APUESTA. Si no se cumple, **el checker NO tira** y lo deja explicado en el informe. Así una cuenta sin saldo nunca intenta una tirada en el escenario 1, en la serie o en la demo |
 
 ## Reglas que NO se negocian
 

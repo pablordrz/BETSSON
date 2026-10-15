@@ -46,6 +46,7 @@ const OWNERS = {
     'tests/demo/**',
     'scripts/open-browser.cjs',
     'scripts/demo*',
+    'scripts/run-all*',
     'package.json',
     'package-lock.json',
     'src/vision/settle.ts',

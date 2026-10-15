@@ -16,7 +16,7 @@ Situación de partida, medida en vivo: unos **86 s** hasta tener el juego listo 
 
 ```
 tests/demo/**
-scripts/open-browser.cjs, scripts/demo*
+scripts/open-browser.cjs, scripts/demo*, scripts/run-all.cjs   (npm run all)
 package.json, package-lock.json        (scripts y dependencias para todo el equipo)
 src/vision/settle.ts, motion.ts, bet.ts, hud.ts, ocr.ts, game-screen.ts
                                         (solo rendimiento interno; NO cambies las firmas exportadas)
@@ -52,6 +52,23 @@ tests/unit/fixtures/demo/**             (fotogramas que te pidan B o C, SIN dato
 5. **Dependencias**: si B o C piden un paquete, añádelo en un PR pequeño **que se mergea antes que los suyos**.
 6. **Fotogramas** que pidan B o C (intro, rodillos girando, premio, saldo insuficiente), sin datos personales, en `tests/unit/fixtures/demo/`.
 
+## Escenario 2 — usuario sin saldo (te toca a ti: eres quien ejecuta en vivo)
+
+Con la cuenta **sin saldo** (`EMPTY_USER/PASS` en `.env`), el checker debe demostrar que **la tirada queda bloqueada**:
+1. Inicia sesión con esa cuenta (Brave limpio: `npm run all` abre uno nuevo para cada escenario y así no hereda la sesión de la cuenta con saldo).
+2. Entra en el juego y lee el saldo: CRÉDITO (≈ 0,00 €) y saldo de Betsson.
+3. Intenta una tirada: `game.spinRejected` debe ver que **los rodillos no giran**.
+4. `game.message`: mensaje de **saldo insuficiente en español**, en el juego o en la web de Betsson.
+5. `money.unchanged`: **ni el saldo del juego ni el de Betsson cambian**.
+
+**Qué tienes que hacer**
+- Ejecutarlo en vivo (`npm run all`, o solo `npx playwright test --project=betsson.es tests/scenarios/scenario2-insufficient-balance.spec.ts` con un `npm run browser:fresh` antes) y revisar el informe.
+- **Puntos que hay que confirmar en vivo**, porque aún no se han visto con una cuenta a 0 €:
+  - si Betsson deja abrir Real Play o la sesión de juego sin saldo (el límite de pérdidas es un porcentaje del saldo);
+  - qué texto exacto muestra el mensaje y dónde (en el canvas o en la web).
+- Si el texto no lo reconoce la expresión de `src/config/game-text.ts` (`insufficientBalance`) o falta un paso, ese archivo está **congelado**: pásale al equipo la captura y el texto exacto, y se cambia en un PR pequeño acordado.
+- Captura los fotogramas del mensaje (sin datos personales) en `tests/unit/fixtures/demo/` para B y C.
+
 ## Reglas especiales (dinero real)
 
 - Siempre **apuesta mínima**. Nunca quites la comprobación previa (`money.preflight`) de los escenarios.
@@ -60,6 +77,7 @@ tests/unit/fixtures/demo/**             (fotogramas que te pidan B o C, SIN dato
 
 ## Terminado cuando
 
+- `npm run all` ejecuta todo seguido. El **escenario 2 bloquea la tirada** de la cuenta sin saldo, con el mensaje en español y los saldos sin cambiar.
 - 3 ejecuciones seguidas de `npm run demo` sin intervención, todas en **menos de 4 min**.
 - Los escenarios 1 y 2 siguen en verde con los mismos pasos, y `npm run unit` también.
 - `node scripts/check-ownership.cjs D` → OK.

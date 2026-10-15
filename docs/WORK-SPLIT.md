@@ -234,7 +234,7 @@ Deben ser claros, con ejemplos **del código real** (rutas y fragmentos cortos),
 | `docs/why-typescript.md`, `docs/code-philosophy.md`, `docs/qa-approach.md`, `docs/presentation-outline.md`, `README.md` | A |
 | `docs/vision-approaches.md`, `src/vision/controls/**`, `src/vision/template.ts`, `assets/templates/**`, `scripts/bench-vision.*`, `tests/unit/vision-approaches.spec.ts` | B |
 | `src/steps/runner.ts`, `src/utils/checks.ts`, `src/reporter/**`, `merge.config.ts`, `playwright.config.ts`, `tests/fixtures.ts`, `tests/unit/steps.spec.ts`, `tests/unit/reporter.spec.ts`, `tests/unit/isolation.spec.ts`, `docs/reports-and-logs.md`, `docs/test-isolation.md` | C |
-| `tests/demo/**`, `scripts/open-browser.cjs`, `scripts/demo*`, `package.json`, `package-lock.json`, `src/vision/{settle,motion,bet,hud,ocr,game-screen}.ts`, `src/pages/**`, `.env.example`, `docs/demo-runbook.md` | D |
+| `tests/demo/**`, `scripts/open-browser.cjs`, `scripts/demo*`, `scripts/run-all.cjs`, `package.json`, `package-lock.json`, `src/vision/{settle,motion,bet,hud,ocr,game-screen}.ts`, `src/pages/**`, `.env.example`, `docs/demo-runbook.md` | D |
 | `.gitignore`, `ci/**`, `.github/**` | C |
 | `src/steps/step.ts`, `src/steps/*.steps.ts`, `src/steps/index.ts`, `tests/scenarios/**`, `src/config/**`, `src/auth/**`, `tsconfig.json`, `scripts/check-ownership.cjs` | **Congelados**: cambios solo de común acuerdo, en un PR aparte |
 
