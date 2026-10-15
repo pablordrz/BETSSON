@@ -1,0 +1,26 @@
+{
+  "name": "betsson-game-validation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Malackathon 2026 · Betsson Intelligent Game Validation — validates Pragmatic Play games on betsson.es the way a player sees them (OCR + vision)",
+  "scripts": {
+    "test": "playwright test --project=betsson.es",
+    "calibrate": "playwright test --project=calibrate-betsson.es",
+    "unit": "playwright test --project=unit",
+    "report": "playwright show-report reports/playwright",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.10.0",
+    "@types/pixelmatch": "^5.2.6",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@tesseract.js-data/spa": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "pixelmatch": "^5.3.0",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^5.1.1"
+  }
+}
