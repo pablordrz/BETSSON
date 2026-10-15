@@ -24,8 +24,9 @@ export default defineConfig<TestOptions, WorkerOptions>({
     // Headed by default: WebGL games render reliably. In CI it runs under xvfb.
     headless: process.env.HEADLESS === '1',
     channel: process.env.PW_CHANNEL || undefined,
-    trace: 'on',
-    video: 'on',
+    // evidence only where it helps: trace and video are kept for failed tests (EVIDENCE=all keeps them always)
+    trace: process.env.EVIDENCE === 'all' ? 'on' : 'retain-on-failure',
+    video: process.env.EVIDENCE === 'all' ? 'on' : 'retain-on-failure',
     screenshot: 'off', // our own masked/annotated screenshots are attached instead
     actionTimeout: 20_000,
     navigationTimeout: 60_000,

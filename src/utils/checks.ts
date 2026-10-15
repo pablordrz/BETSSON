@@ -13,7 +13,16 @@ export interface CheckRecord {
   actual: string;
   note?: string;
   evidence?: string[];
+  /** Readable cause of a failure (src/reporter/explain.ts). */
+  why?: string;
+  /** Last log lines of the step when it failed. */
+  log?: string[];
+  /** Step that produced the row (requirement rows). */
+  step?: string;
 }
+
+/** Optional extras of a row. Every field is optional: existing calls keep working unchanged. */
+export type CheckExtras = Pick<CheckRecord, 'note' | 'evidence' | 'why' | 'log' | 'step'>;
 
 export const CHECK_ATTACHMENT = 'check';
 
@@ -37,7 +46,7 @@ export class Checks {
     pass: boolean,
     expected: string,
     actual: string,
-    opts: { note?: string; evidence?: string[] } = {},
+    opts: CheckExtras = {},
   ): Promise<boolean> {
     await this.add({ id, title, status: pass ? 'PASS' : 'FAIL', expected, actual, ...opts });
     expect.soft(pass, `[${this.market.site}] ${id} — ${title}\n  expected: ${expected}\n  actual:   ${actual}`).toBe(true);
@@ -45,7 +54,7 @@ export class Checks {
   }
 
   /** Informational row: shown in the report, never fails the test (cross-checks, observations). */
-  async info(id: string, title: string, expected: string, actual: string, opts: { note?: string; evidence?: string[] } = {}) {
+  async info(id: string, title: string, expected: string, actual: string, opts: CheckExtras = {}) {
     await this.add({ id, title, status: 'INFO', expected, actual, ...opts });
   }
 
