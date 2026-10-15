@@ -13,10 +13,13 @@ import {
   preflight,
   readBetssonBalance,
   readGameHud,
+  reconcileBetsson,
+  reconcileGame,
   setMinimumBet,
   spin,
   startGameSession,
   waitSpinEnd,
+  wagerUsed,
 } from '../../src/steps';
 import { test } from '../fixtures';
 
@@ -41,6 +44,12 @@ test('Scenario 1 — completed Real Play spin', async ({ steps }) => {
   await steps.must(spin, { game, credit: before.credit, noise });
   const after = (await steps.must(waitSpinEnd, { game, noise })).data;
 
-  // 7. Leave the game: Betsson's balance on the page must equal the last CREDIT read in the game
+  // 7. Settled outcome and balances (challenge requirements): wager used = wager shown, in-game balance and
+  //    Betsson balance reconcile with the wager and the payout observed on screen
+  await steps.run(wagerUsed, { betBefore: before.bet, betAfter: after.hud.bet?.value ?? null, before: before.credit, after: after.credit, win: after.win });
+  await steps.run(reconcileGame, { before: before.credit, bet: before.bet, after: after.credit, win: after.win });
+  await steps.run(reconcileBetsson, { start: betssonBefore, wagered: before.bet.amount, paid: after.win?.amount ?? 0 });
+
+  // 8. Leave the game: Betsson's balance on the page must equal the last CREDIT read in the game
   await steps.run(exitGameBalanceMatches, { credit: after.credit });
 });
