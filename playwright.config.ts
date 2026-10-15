@@ -41,7 +41,9 @@ export default defineConfig<TestOptions, WorkerOptions>({
     { name: `series-${es.site}`, testMatch: /series[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     // balance validations that never spend money (person A): zero-balance account, game vs header balance
     { name: `balance-${es.site}`, testMatch: /balance[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
-    { name: `demo-${es.site}`, testMatch: /demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
+    // report demo: a test that fails ON PURPOSE (injected misread) to show the failure report — npm run report:demo
+    { name: `report-demo-${es.site}`, testMatch: /report-demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
+    { name: `demo-${es.site}`, testMatch: /[\\/]demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     { name: `login-${es.site}`, testMatch: /login-manual\.spec\.ts$/, use: { marketId: 'es' } },
     { name: 'unit', testMatch: /unit[\\/].*\.spec\.ts$/ },
   ],
