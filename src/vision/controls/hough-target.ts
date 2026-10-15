@@ -95,6 +95,7 @@ export class HoughCircleTarget implements ScreenTarget {
       x: (winner.x + 0.5) / g.w,
       y: (winner.y + 0.5) / g.h,
       score: winner.score,
+      size: (2 * winner.r) / g.w,
       detail: `${this.name} found by circle Hough at (${((winner.x + 0.5) / g.w).toFixed(2)}, ${((winner.y + 0.5) / g.h).toFixed(2)}), r ${((winner.r / g.w) * 100).toFixed(1)}% width, score ${winner.score.toFixed(2)}`,
     };
   }

@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { normalize } from '../../utils/text';
 import { imageSize } from '../game-screen';
 import type { Ocr } from '../ocr';
@@ -9,6 +10,8 @@ export interface TargetMatch {
   y: number;
   score: number;
   detail: string;
+  /** Diameter of what was found, as a fraction of the frame width (when the detector knows it). */
+  size?: number;
 }
 
 /**
@@ -34,7 +37,17 @@ export class TemplateTarget implements ScreenTarget {
   constructor(
     readonly name: string,
     templateFile: string,
-    private readonly opts: { minScore?: number; minScale?: number; maxScale?: number; circular?: boolean } = {},
+    private readonly opts: {
+      minScore?: number;
+      minScale?: number;
+      maxScale?: number;
+      circular?: boolean;
+      /**
+       * Fast first search: a cheaper detector (e.g. HoughCircleTarget) says WHERE a candidate is, and the template
+       * only confirms it there. If it does not confirm, the full search runs as usual. Must not contain this target.
+       */
+      seed?: ScreenTarget;
+    } = {},
   ) {
     const tpl = loadTemplate(templateFile);
     if (!tpl) throw new Error(`Template not found: ${templateFile}`);
@@ -59,23 +72,38 @@ export class TemplateTarget implements ScreenTarget {
         return { x: best.x, y: best.y, score: best.score, detail: `${this.name} seen again at (${best.x.toFixed(2)}, ${best.y.toFixed(2)}), score ${best.score.toFixed(2)}` };
       }
     }
+    if (this.opts.seed) {
+      const hint = await this.opts.seed.locate(frame);
+      if (hint) {
+        // the seed's size gives the template scale directly: only a few sizes around it instead of all of them
+        let scales: number[] | undefined;
+        if (hint.size) {
+          const frameWidth = (await sharp(frame).metadata()).width ?? 1;
+          const tplWidth = (await sharp(this.template).metadata()).width ?? 1;
+          const s0 = (hint.size * frameWidth) / tplWidth;
+          scales = [1, 0.95, 1.05, 0.9, 1.1, 0.85, 1.15].map((f) => s0 * f);
+        }
+        const found = await this.search(frame, { x: hint.x - 0.07, y: hint.y - 0.07, w: 0.14, h: 0.14 }, scales);
+        if (found) return { ...found, detail: `${found.detail} (located by ${this.opts.seed.name}, confirmed by image)` };
+      }
+    }
     return this.search(frame);
   }
 
   /** Coarse-to-fine multi-scale search: the icon's size depends on the game and the window size. */
-  private async search(frame: Buffer): Promise<TargetMatch | null> {
+  private async search(frame: Buffer, region?: { x: number; y: number; w: number; h: number }, scales?: number[]): Promise<TargetMatch | null> {
     const minScore = this.opts.minScore ?? 0.7; // ZNCC
     // most likely size first (1 = as captured), then alternately smaller/larger: a clear match stops early
-    const coarse: number[] = [1];
-    for (let k = 1; ; k++) {
+    const coarse: number[] = scales ?? [1];
+    for (let k = 1; !scales; k++) {
       const smaller = 1 / 1.1 ** k;
       const larger = 1.1 ** k;
       const inRange = [smaller >= (this.opts.minScale ?? 0.4) ? smaller : null, larger <= (this.opts.maxScale ?? 2.5) ? larger : null];
       if (inRange.every((v) => v === null)) break;
       coarse.push(...inRange.filter((v): v is number => v !== null));
     }
-    let best = await this.bestOf(frame, coarse);
-    if (best.score < CLEAR_MATCH) best = await this.bestOf(frame, [0.95, 0.975, 1.025, 1.05].map((f) => best.scale * f), best);
+    let best = await this.bestOf(frame, coarse, undefined, region);
+    if (best.score < CLEAR_MATCH) best = await this.bestOf(frame, [0.95, 0.975, 1.025, 1.05].map((f) => best.scale * f), best, region);
     this.lastBest = { score: best.score, x: best.x, y: best.y, scale: best.scale };
     if (best.score < minScore) return null;
     this.lastFound = { x: best.x, y: best.y, scale: best.scale };
@@ -87,10 +115,10 @@ export class TemplateTarget implements ScreenTarget {
     };
   }
 
-  private async bestOf(frame: Buffer, scales: number[], start?: TemplateMatch & { scale: number }) {
+  private async bestOf(frame: Buffer, scales: number[], start?: TemplateMatch & { scale: number }, region?: { x: number; y: number; w: number; h: number }) {
     let best = start ?? { score: -1, x: 0, y: 0, scale: 1 };
     for (const scale of scales) {
-      const m = await findTemplate(frame, this.template, { scale, circular: this.opts.circular });
+      const m = await findTemplate(frame, this.template, { scale, circular: this.opts.circular, region });
       if (m.score > best.score) best = { ...m, scale };
       if (best.score >= CLEAR_MATCH) break; // unambiguous: no need to try other sizes
     }

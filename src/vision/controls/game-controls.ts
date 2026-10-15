@@ -29,14 +29,16 @@ const TEMPLATES = path.resolve('assets', 'templates');
  * The player finds it by its look (image), the intro may also say CONTINUAR / PULSA… (text).
  *
  * Cascade for the spin button (benchmark on real frames: docs/vision-approaches.md):
- *   1. template ZNCC — the exact Pragmatic icon; most precise, and ms-fast once found (re-check where it was)
+ *   1. template ZNCC — the exact Pragmatic icon; most precise. First search seeded by Hough (where + size:
+ *      2.6 s → 0.3 s median), then ms-fast re-checks where it was
  *   2. circle Hough  — any big round button with an icon, no template; same hit rate, ~50× faster on a first search
  *   3. SPACE key     — players' shortcut
  *   4. calibrated position — last resort; the screen still has to confirm the spin started
  */
 export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketConfig): GameControls {
-  const arrowsIcon = new TemplateTarget('round arrows button', path.join(TEMPLATES, 'pragmatic', 'spin.png'), { circular: true });
   const roundButton = new HoughCircleTarget('round spin button (Hough)');
+  // first search seeded by Hough (where), confirmed by the template (that it IS the Pragmatic icon)
+  const arrowsIcon = new TemplateTarget('round arrows button', path.join(TEMPLATES, 'pragmatic', 'spin.png'), { circular: true, seed: roundButton });
   const continueText = allGameTexts.map((t) => t.continue.source).join('|');
   return {
     spinButton: new FirstVisibleTarget('spin button', [arrowsIcon, roundButton]),

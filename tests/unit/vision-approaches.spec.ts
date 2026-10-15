@@ -73,6 +73,7 @@ const CASES: Case[] = [
 /** Fresh instances per case: TemplateTarget remembers the last position (fast path), which would bias results. */
 const TECHNIQUES: Array<{ name: string; make: () => ScreenTarget }> = [
   { name: 'template ZNCC', make: () => new TemplateTarget('spin', TEMPLATE, { circular: true }) },
+  { name: 'template seeded by Hough', make: () => new TemplateTarget('spin', TEMPLATE, { circular: true, seed: new HoughCircleTarget('hough') }) },
   { name: 'Hough circles', make: () => new HoughCircleTarget('spin') },
   { name: 'segmentation', make: () => new SegmentationTarget('spin') },
 ];
@@ -86,9 +87,12 @@ interface Row {
   ms: number;
 }
 
+/** Plain `npm run unit`: only the most relevant negative (button covered, other round buttons still there). */
+const RUN_CASES = process.env.BENCH ? CASES : CASES.filter((c) => c.truth || c.name.includes('button covered'));
+
 async function evaluate(): Promise<Row[]> {
   const rows: Row[] = [];
-  for (const c of CASES) {
+  for (const c of RUN_CASES) {
     const png = await c.png();
     const size = await sharp(png).metadata();
     for (const t of TECHNIQUES) {
@@ -122,6 +126,13 @@ test.describe('vision approaches — spin button on real frames', () => {
     const rows = (await results()).filter((r) => r.technique === 'template ZNCC');
     expect(rows.filter((r) => r.verdict === 'MISS').map((r) => r.case)).toEqual([]);
     expect(rows.filter((r) => r.verdict === 'FALSE+').map((r) => r.case)).toEqual([]);
+  });
+
+  // (speed is compared in the benchmark, not asserted here: timings in unit tests are machine-dependent)
+  test('template seeded by Hough: same hits as the template, no false positives', async () => {
+    const seeded = (await results()).filter((r) => r.technique === 'template seeded by Hough');
+    expect(seeded.filter((r) => r.verdict === 'MISS').map((r) => r.case)).toEqual([]);
+    expect(seeded.filter((r) => r.verdict === 'FALSE+').map((r) => r.case)).toEqual([]);
   });
 
   test('Hough circles: finds the button in every positive case (no template), no false positives', async () => {

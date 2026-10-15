@@ -14,7 +14,7 @@ Lo que garantizan las mediciones lo comprueban tests automáticos en `npm run un
 
 | Problema | Técnica elegida | Por qué (dato medido) |
 |---|---|---|
-| **Encontrar el botón de tirar** | Cascada: **plantilla ZNCC → Hough de círculos** → tecla ESPACIO → posición calibrada | Plantilla: 9/9, error 0,08 radios. Hough: 9/9, **0 falsos positivos, 56 ms** (50× más rápido en la primera búsqueda) y sin plantilla |
+| **Encontrar el botón de tirar** | Cascada: **plantilla ZNCC guiada por Hough → Hough de círculos** → tecla ESPACIO → posición calibrada | Plantilla: 9/9, error 0,08 radios. Hough: 9/9, **0 falsos positivos, 56 ms** y sin plantilla. Juntas: 9/9 y la primera búsqueda pasa de 2,6 s a **0,3 s** |
 | **Leer CRÉDITO / APUESTA** | **OCR (Tesseract) con binarización del texto brillante (≥ 210)** | La única variante correcta en las dos franjas del HUD; el OCR normal falla en ambas |
 | **Saber si los rodillos se mueven** | **Diferencia de fotogramas** con umbral sobre el ruido en reposo | Reposo y temblor ≤ 0,02 frente a 0,25 en un cambio real: margen de 10× |
 | **Mensaje de saldo insuficiente** | OCR + expresiones regulares por intención y por idioma | Pendiente de fotogramas reales (ver «Siguientes pasos») |
@@ -47,8 +47,11 @@ Lo que garantizan las mediciones lo comprueban tests automáticos en `npm run un
 | Técnica | Aciertos | Falsos positivos | Error medio | Mediana | Máximo | Necesita |
 |---|---|---|---|---|---|---|
 | **Plantilla ZNCC** (`template.ts`, `TemplateTarget`) | **9/9** | **0/3** | 0,08 radios | 2 862 ms¹ | 7 105 ms¹ | el icono recortado (`assets/templates/pragmatic/spin.png`) |
+| **Plantilla guiada por Hough** (la que usamos) | **9/9** | **0/3** | 0,08 radios | **311 ms**² | 849 ms² | el icono + Hough |
 | **Hough de círculos** (`hough-target.ts`) | **9/9** | **0/3** | 0,10 radios | **56 ms** | 69 ms | nada: cualquier botón redondo grande con icono |
 | **Segmentación** (`segmentation-target.ts`) | 3/9 | **0/3** | **0,02 radios** | 41 ms | 66 ms | nada |
+
+² Solo en los casos con botón. Cuando no hay botón, Hough no da pista y la plantilla hace su búsqueda completa (1,7–6,5 s). Lo dejamos así a propósito: si Hough fallase en otro juego, la plantilla todavía lo encuentra sola.
 
 ¹ Es la **primera búsqueda**, en todo el fotograma y a todos los tamaños. Una vez encontrado, la plantilla vuelve a mirar **solo donde estaba y a su tamaño** (camino rápido en `TemplateTarget.locate`), y eso tarda milisegundos. Por eso el coste solo se paga una vez por partida.
 
@@ -87,8 +90,10 @@ Así llegamos al 9/9 sin falsos positivos, en tres iteraciones que dejamos docum
 ### Decisión
 
 ```
-spin: plantilla ZNCC  →  Hough de círculos  →  ESPACIO  →  posición calibrada
+spin: plantilla ZNCC (guiada por Hough)  →  Hough de círculos  →  ESPACIO  →  posición calibrada
 ```
+
+**Plantilla guiada por Hough** (`TemplateTarget` con la opción `seed`): en la primera búsqueda, Hough dice **dónde** hay un botón redondo y **qué tamaño** tiene, en ~50 ms. Después la plantilla solo confirma que **es** el icono de Pragmatic, en esa zona y a unos pocos tamaños alrededor del que dio Hough. Se queda la fiabilidad de la plantilla (9/9, error 0,08) y la primera búsqueda pasa de **2,6 s a 0,3 s de mediana**. Si la plantilla no confirma, hace su búsqueda completa como antes.
 
 - La **plantilla va primero**: es la prueba más fuerte de que es *el* botón de Pragmatic, y tras la primera búsqueda vuelve a comprobarlo en milisegundos.
 - **Hough va segundo**: cubre los juegos o estados donde el icono cambia (otros diseños, el botón en estado «parar»…) con el mismo acierto y sin plantilla.
