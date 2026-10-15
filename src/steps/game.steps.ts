@@ -82,15 +82,87 @@ export const setMinimumBet = defineStep<{ game: GameScreen; presses?: number }, 
   id: 'game.minBet',
   title: 'Wager lowered to the game minimum',
   async run({ ocr, market, layout, controls, log }, { game, presses = 10 }) {
-    const before = (await readHud(game, ocr, market, layout)).bet?.value ?? null;
+    const first = await readHud(game, ocr, market, layout);
+    const before = first.bet?.value ?? null;
+    const creditBefore = first.credit?.value ?? null;
     const pressedOk = await pressRepeatedly(game, controls.betDown, presses);
     log(pressedOk ? `"−" pressed ${presses} times` : '"−" button not visible', { before: before?.amount });
-    await sleep(400);
-    const { reading, stable } = await readHudStable(game, ocr, market, layout, 3);
+    await sleep(800); // a burst of presses: let the HUD settle before reading it
+    const { reading, stable } = await readHudStable(game, ocr, market, layout, 5);
     const bet = reading.bet?.value;
-    // At the minimum the "−" button is greyed out (not recognised): that is fine as long as BET did not go up.
-    const ok = !!bet && stable && (!before || bet.amount <= before.amount);
-    return { ok, detail: `BET ${fmt(before)} → ${fmt(bet)}${pressedOk ? '' : ' ("−" not available: already at the minimum?)'}`, data: bet ? { before, bet } : undefined };
+    // safety: changing the wager must never charge anything (a press on the wrong control could start a spin)
+    const credit = reading.credit?.value ?? null;
+    const charged = !!creditBefore && !!credit && !moneyEq(credit.amount, creditBefore.amount);
+    if (charged) log('CREDIT CHANGED while lowering the wager', { before: creditBefore?.amount, after: credit?.amount });
+    // At the minimum the "−" button is greyed out: pressing it does nothing — fine as long as BET did not go up.
+    const ok = !!bet && stable && !charged && (!before || bet.amount <= before.amount);
+    return {
+      ok,
+      detail: `BET ${fmt(before)} → ${fmt(bet)}${pressedOk ? '' : ' ("−" not available: already at the minimum?)'}${stable ? '' : ' · reads NOT stable'}${charged ? ` · CREDIT CHANGED ${fmt(creditBefore)} → ${fmt(credit)}` : ''}`,
+      data: bet ? { before, bet } : undefined,
+    };
+  },
+});
+
+/**
+ * Raise the wager like a player: press "+" (found by image) ONE step at a time and READ the new BET after each
+ * press. Validates that BET went up and never above `maxBet`: a press that would exceed it is undone with "−".
+ * It never spins. Retrying is not needed (and would press "+" again), so it is not retryable.
+ */
+export const raiseBet = defineStep<{ game: GameScreen; presses?: number; maxBet: number }, { before: Money; bet: Money; pressed: number }>({
+  id: 'game.raiseBet',
+  title: 'Wager raised with "+" (read on screen, never above the cap)',
+  retryable: false,
+  async run({ ocr, market, layout, controls, log }, { game, presses = 1, maxBet }) {
+    const first = await readHudStable(game, ocr, market, layout, 5);
+    const before = first.reading.bet?.value;
+    const creditBefore = first.reading.credit?.value;
+    if (!before || !first.stable) return { ok: false, detail: `BET not read before raising (${fmt(before ?? null)})` };
+    if (before.amount >= maxBet) return { ok: false, detail: `BET ${fmt(before)} is already at or above the cap ${maxBet.toFixed(2)}: not raising` };
+    let bet = before;
+    let pressed = 0;
+    let capped = false;
+    while (pressed < presses) {
+      const plus = await controls.betUp.locate(await game.capture());
+      if (!plus) {
+        log('"+" button not visible (maximum wager reached?)');
+        break;
+      }
+      await game.clickRel(plus.x, plus.y);
+      pressed++;
+      await sleep(600);
+      const after = await readHudStable(game, ocr, market, layout, 5);
+      const now = after.reading.bet?.value;
+      log(`"+" pressed (${pressed}/${presses})`, { bet: now?.amount, how: plus.detail });
+      if (!now || !after.stable) return { ok: false, detail: `BET not readable after pressing "+" (${fmt(now ?? null)})` };
+      // safety: raising the wager must never charge anything (a press on the wrong control could start a spin)
+      const credit = after.reading.credit?.value;
+      if (creditBefore && credit && !moneyEq(credit.amount, creditBefore.amount)) {
+        return { ok: false, detail: `CREDIT CHANGED after pressing "+" (${fmt(creditBefore)} → ${fmt(credit)}): stopping` };
+      }
+      if (now.amount > maxBet + 1e-9) {
+        // over the cap: undo with "−" and stop (the player never wagers above the cap)
+        const minus = await controls.betDown.locate(await game.capture());
+        if (minus) await game.clickRel(minus.x, minus.y);
+        await sleep(400);
+        bet = (await readHudStable(game, ocr, market, layout, 3)).reading.bet?.value ?? now;
+        capped = true;
+        log(`BET ${now.amount.toFixed(2)} above the cap ${maxBet.toFixed(2)}: "−" pressed`, { bet: bet.amount });
+        break;
+      }
+      if (!(now.amount > bet.amount)) {
+        log('BET did not go up after "+" (maximum wager reached?)');
+        bet = now;
+        break;
+      }
+      bet = now;
+    }
+    const ok = bet.amount > before.amount && bet.amount <= maxBet + 1e-9 && bet.currency === market.currency;
+    return {
+      ok,
+      detail: `BET ${fmt(before)} → ${fmt(bet)} after ${pressed} "+" press(es) · cap ${maxBet.toFixed(2)} ${market.currency}${capped ? ' (one step undone: above the cap)' : ''}`,
+      data: { before, bet, pressed },
+    };
   },
 });
 

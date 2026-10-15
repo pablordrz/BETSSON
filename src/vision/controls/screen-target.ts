@@ -102,10 +102,13 @@ export class TemplateTarget implements ScreenTarget {
   private async search(frame: Buffer, region?: Region, seedSize?: number): Promise<TargetMatch | null> {
     const minScore = this.opts.minScore ?? 0.7; // ZNCC
     // most likely size first (1 = as captured), then alternately smaller/larger: a clear match stops early
+    // within a small region (seeded search) finer size steps are cheap — and needed: low-texture icons (a dark disk
+    // with a thin "+") lose most of their score when the size is a few % off
+    const step = region ? 1.03 : 1.1;
     const coarse: number[] = [1];
     for (let k = 1; ; k++) {
-      const smaller = 1 / 1.1 ** k;
-      const larger = 1.1 ** k;
+      const smaller = 1 / step ** k;
+      const larger = step ** k;
       const inRange = [smaller >= (this.opts.minScale ?? 0.4) ? smaller : null, larger <= (this.opts.maxScale ?? 2.5) ? larger : null];
       if (inRange.every((v) => v === null)) break;
       coarse.push(...inRange.filter((v): v is number => v !== null));
@@ -168,6 +171,26 @@ export class OcrTextTarget implements ScreenTarget {
       score: word.confidence / 100,
       detail: `${this.name} read on screen: "${word.text}"`,
     };
+  }
+}
+
+/** A control located relative to another one the player already recognises (used as a template `seed`). */
+export class NextToTarget implements ScreenTarget {
+  /**
+   * Where a control usually is RELATIVE to another one the player already recognises (e.g. Pragmatic's bet "+" is
+   * just right of the spin button). Used as a `seed`: it only says where to look; the template still has to
+   * recognise the control there. Offsets are fractions of the frame.
+   */
+  constructor(
+    readonly name: string,
+    private readonly anchor: ScreenTarget,
+    private readonly offset: { dx: number; dy: number },
+  ) {}
+
+  async locate(frame: Buffer): Promise<TargetMatch | null> {
+    const a = await this.anchor.locate(frame);
+    if (!a) return null;
+    return { x: a.x + this.offset.dx, y: a.y + this.offset.dy, score: a.score, detail: `${this.name} (next to ${this.anchor.name})` };
   }
 }
 

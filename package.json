@@ -13,6 +13,7 @@
     "demo": "playwright test --project=demo-betsson.es --reporter=list",
     "all": "node scripts/run-all.cjs",
     "report:demo": "playwright test --project=report-demo-betsson.es",
+    "bet:raise": "playwright test --project=bet-betsson.es",
     "balance": "playwright test --project=balance-betsson.es --pass-with-no-tests",
     "unit": "playwright test --project=unit",
     "report": "playwright show-report reports/playwright",

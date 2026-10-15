@@ -137,6 +137,29 @@ test.describe('real Pragmatic frame (Triple Hop Pots, betsson.es)', () => {
     expect(m!.x).toBeCloseTo(548 / 1212, 1);
     expect(m!.y).toBeCloseTo(570 / 683, 1);
   });
+
+  test('bet "+" button is found by image, right of the spin button (not mistaken for "−")', async () => {
+    const plus = await new TemplateTarget('bet plus button', path.resolve('assets/templates/pragmatic/bet-plus.png'), { circular: true }).locate(frame());
+    const minus = await new TemplateTarget('bet minus button', path.resolve('assets/templates/pragmatic/bet-minus.png'), { circular: true }).locate(frame());
+    expect(plus).not.toBeNull();
+    // measured centre of "+" on this frame: (662.5, 569) px of 1212×683
+    expect(Math.abs(plus!.x * 1212 - 662.5)).toBeLessThan(6);
+    expect(Math.abs(plus!.y * 683 - 569)).toBeLessThan(6);
+    expect(plus!.x).toBeGreaterThan(0.5); // spin button is at x≈0.50
+    expect(minus!.x).toBeLessThan(0.5);
+  });
+
+  test('live frame: "+" found next to the spin button although a coin crosses its edge (seeded, fine sizes)', async () => {
+    // tests/unit/fixtures/pragmatic-plus-live.png: game canvas from a live run (1516×855, BET 0,10 €), where the
+    // whole-frame search missed the "+" (coin over its edge, size 1.25× between coarse steps)
+    const live = fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-plus-live.png'));
+    const layout = { frameUrl: /x/, hud: { x: 0, y: 0.8, w: 1, h: 0.2 }, reels: { x: 0, y: 0, w: 1, h: 1 }, spinButton: { x: 0.5, y: 0.8 } };
+    const controls = pragmaticControls(layout, {} as Ocr, getMarket('es'));
+    const plus = await controls.betUp.locate(live);
+    expect(plus, 'bet "+" found on the live frame').not.toBeNull();
+    expect(Math.abs(plus!.x * 1516 - 830)).toBeLessThan(6);
+    expect(Math.abs(plus!.y * 855 - 713)).toBeLessThan(6);
+  });
 });
 
 test.describe('intro: press the spin key when the spin/continue button is not recognised', () => {

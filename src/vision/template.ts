@@ -83,19 +83,31 @@ export async function findTemplate(screen: Buffer, template: Buffer, opts: Templ
   const xMax = r ? Math.min(S.w - T.w, Math.ceil((r.x + r.w) * S.w - T.w / 2)) : S.w - T.w;
   const yMax = r ? Math.min(S.h - T.h, Math.ceil((r.y + r.h) * S.h - T.h / 2)) : S.h - T.h;
 
-  // coarse grid, then refine around the best position pixel by pixel
-  let best = { score: -1, x: 0, y: 0 };
+  // coarse grid (every 3 px), then refine pixel by pixel around the TOP candidates — not only the best one: a target
+  // that falls between grid points can score below a decoy on the coarse grid and only win once refined
+  const TOP = 5;
+  const top: Array<{ score: number; x: number; y: number }> = [];
   for (let y = yMin; y <= yMax; y += 3) {
     for (let x = xMin; x <= xMax; x += 3) {
       const score = zncc(x, y);
-      if (score > best.score) best = { score, x, y };
+      if (top.length < TOP || score > top[top.length - 1].score) {
+        // keep distinct places only (neighbours of a kept cell are the same candidate)
+        const near = top.findIndex((c) => Math.abs(c.x - x) <= 3 && Math.abs(c.y - y) <= 3);
+        if (near >= 0) {
+          if (score > top[near].score) top[near] = { score, x, y };
+        } else top.push({ score, x, y });
+        top.sort((a, b) => b.score - a.score);
+        if (top.length > TOP) top.pop();
+      }
     }
   }
-  const coarse = best;
-  for (let y = Math.max(0, coarse.y - 2); y <= Math.min(S.h - T.h, coarse.y + 2); y++) {
-    for (let x = Math.max(0, coarse.x - 2); x <= Math.min(S.w - T.w, coarse.x + 2); x++) {
-      const score = zncc(x, y);
-      if (score > best.score) best = { score, x, y };
+  let best = top[0] ?? { score: -1, x: 0, y: 0 };
+  for (const c of top) {
+    for (let y = Math.max(0, c.y - 2); y <= Math.min(S.h - T.h, c.y + 2); y++) {
+      for (let x = Math.max(0, c.x - 2); x <= Math.min(S.w - T.w, c.x + 2); x++) {
+        const score = zncc(x, y);
+        if (score > best.score) best = { score, x, y };
+      }
     }
   }
   return { score: best.score, x: (best.x + T.w / 2) / S.w, y: (best.y + T.h / 2) / S.h };

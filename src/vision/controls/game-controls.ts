@@ -6,7 +6,7 @@ import { allGameTexts } from '../../config/game-text';
 import type { Ocr } from '../ocr';
 import { HoughCircleTarget } from './hough-target';
 import { ClickOn, PressKey, type PlayerAction } from './player-action';
-import { FirstVisibleTarget, FixedPointTarget, OcrTextTarget, TemplateTarget, type ScreenTarget } from './screen-target';
+import { FirstVisibleTarget, FixedPointTarget, NextToTarget, OcrTextTarget, TemplateTarget, type ScreenTarget } from './screen-target';
 
 /**
  * The controls of a game provider, as the player recognises them. Scenarios depend only on this
@@ -21,6 +21,8 @@ export interface GameControls {
   continueButton: ScreenTarget;
   /** The button that lowers the wager one step ("−"). */
   betDown: ScreenTarget;
+  /** The button that raises the wager one step ("+"). */
+  betUp: ScreenTarget;
 }
 
 const TEMPLATES = path.resolve('assets', 'templates');
@@ -44,8 +46,13 @@ export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketCo
   // first search seeded by Hough (where + size), confirmed by the templates (that it IS the Pragmatic icon)
   const arrowsIcon = new TemplateTarget('round arrows button', spinLooks, { circular: true, seed: roundButton });
   const continueText = allGameTexts.map((t) => t.continue.source).join('|');
+  const spinButton = new FirstVisibleTarget('spin button', [arrowsIcon, roundButton]);
+  // Pragmatic puts bet "−" / "+" just left / right of the spin button (≈4.5 % of the width): look for them THERE,
+  // with fine sizes — a dark disk with a thin sign is easy to miss with coarse steps or when a coin crosses its edge
+  const leftOfSpin = new NextToTarget('left of the spin button', spinButton, { dx: -0.045, dy: 0 });
+  const rightOfSpin = new NextToTarget('right of the spin button', spinButton, { dx: 0.045, dy: 0 });
   return {
-    spinButton: new FirstVisibleTarget('spin button', [arrowsIcon, roundButton]),
+    spinButton,
     spin: [
       new ClickOn(arrowsIcon),
       new ClickOn(roundButton),
@@ -59,6 +66,7 @@ export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketCo
       new OcrTextTarget('continue text', ocr, market.ocrLang, new RegExp(continueText)),
       roundButton,
     ]),
-    betDown: new TemplateTarget('bet minus button', path.join(TEMPLATES, 'pragmatic', 'bet-minus.png'), { circular: true }),
+    betDown: new TemplateTarget('bet minus button', path.join(TEMPLATES, 'pragmatic', 'bet-minus.png'), { circular: true, seed: leftOfSpin }),
+    betUp: new TemplateTarget('bet plus button', path.join(TEMPLATES, 'pragmatic', 'bet-plus.png'), { circular: true, seed: rightOfSpin }),
   };
 }
