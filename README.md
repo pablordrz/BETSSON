@@ -11,12 +11,65 @@ game's DOM or on "I clicked Spin" — it proves each step from pixels.
 | Is the game there? | Canvas located in the provider iframe and **not blank** (pixel variance) |
 | What are my balance, wager, currency, language? | **OCR** of the HUD (`CRÉDITO` / `APUESTA` / `GANANCIA`) → amount + `€` + label language |
 | Did the spin actually start? | **Motion detection** on the reels: change above the *measured idle-animation noise* |
-| Did it finish? | Reels **settle** (N stable frames) and the HUD values stop changing |
+| Did it finish? | Spin button **available again** + reels **calm** + CREDIT **stable** (several reads) |
 | Was I charged correctly? | `in-game after = before − wager + payout`, payout = **win read on screen** |
 | Does Betsson agree? | Betsson header balance polled until `after = before − wager + payout` |
 | No money → what do I see? | OCR of the **insufficient-balance message** in Spanish; both balances unchanged |
 
 Bonus cross-checks (reported as `INFO`, never the proof): provider server responses vs. OCR, in-game credit vs. Betsson balance.
+
+## Resultados y evidencias (ejecuciones reales del 15/10/2026)
+
+Todo lo que sigue sale de **ejecuciones reales contra betsson.es** (Real Play, apuesta mínima), con capturas, logs y
+cifras. Los informes completos están en Markdown y en HTML:
+
+- **Markdown** (se lee en GitHub): [`docs/reports/`](docs/reports/)
+- **HTML** (con menú; abre `docs/reports/index.html` en el navegador): se regenera con `npm run reports:html`
+
+| # | Informe | Resultado | Cifras reales |
+|---|---|---|---|
+| 1 | [Escenario 1: tirada completada](docs/reports/01-escenario-1-tirada-completa.md) · [HTML](docs/reports/01-escenario-1-tirada-completa.html) | ✅ todo superado | apuesta 0,10 € · **106,26 − 0,10 = 106,16 €** en el juego **y** en Betsson · fin de tirada en 6,1 s |
+| 2 | [Escenario 2: cuenta sin saldo](docs/reports/02-escenario-2-sin-saldo.md) · [HTML](docs/reports/02-escenario-2-sin-saldo.html) | ✅ todo superado | intento rechazado **sin cobrar** · «**Fondos insuficientes**» en español · saldos 0,00 € sin cambios |
+| 3 | [Series de tiradas](docs/reports/03-series-de-tiradas.md) · [HTML](docs/reports/03-series-de-tiradas.html) | ✅ | 5 tiradas (una con premio de 0,16 €) · saldo final 105,82 € = Betsson · de 14–31 s a **6–10 s por tirada** |
+| 4 | [Subir la apuesta con «+»](docs/reports/04-subir-apuesta.md) · [HTML](docs/reports/04-subir-apuesta.html) | ✅ 57/57 | **0,10 → 0,20 €** · cobrados 0,20 € · **104,60 − 0,20 = 104,40 €** en el juego y en Betsson |
+| 5 | [Cómo se ve un fallo](docs/reports/05-informe-de-fallos.md) · [HTML](docs/reports/05-informe-de-fallos.html) | ✗ 2 fallos **provocados** | CRÉDITO alterado −1 € → detectado en el juego (105,72 vs 104,72 €) y frente al DOM de Betsson |
+| 6 | [Visión y OCR](docs/reports/06-vision-y-ocr.md) · [HTML](docs/reports/06-vision-y-ocr.html) | medido | botón de tirar **9/9, 0 falsos positivos**, 2,7 s → 0,4 s · OCR del saldo 0/2 → 2/2 |
+| 7 | [Problemas resueltos en vivo](docs/reports/07-problemas-resueltos.md) · [HTML](docs/reports/07-problemas-resueltos.html) | 10 problemas | antifraude, cookies, OCR, fin de tirada, mensaje sobre los rodillos, «+» tapado por una moneda… |
+| 8 | [Calidad y arquitectura](docs/reports/08-calidad-y-arquitectura.md) · [HTML](docs/reports/08-calidad-y-arquitectura.html) | **42 tests** ✅ | pasos atómicos, cascadas, informe solo de fallos, salvaguardas de dinero |
+
+### Lo que ve el checker
+
+Captura real anotada: **CRÉDITO 105,10 € y APUESTA 0,10 € leídos por OCR** (verde), **botón de tirar localizado por
+imagen** (rojo) y zona de rodillos donde se mide el movimiento (morado).
+
+![Lo que ve el checker](docs/evidence/hud-ocr-anotado.jpg)
+
+### Los controles, reconocidos por imagen
+
+![Plantillas de los controles](docs/evidence/plantillas.png)
+
+### Comparación de técnicas para encontrar el botón de tirar (medido sobre fotogramas reales)
+
+![Fiabilidad frente a velocidad](docs/vision-approaches/01-fiabilidad-vs-velocidad.png)
+
+![Mapa de casos](docs/vision-approaches/04-mapa-de-casos.png)
+
+### Leer el saldo: el preprocesado decide
+
+![OCR del HUD](docs/vision-approaches/05-ocr-hud.png)
+
+### Un problema real resuelto: el «+» tapado por una moneda
+
+En vivo, una moneda del decorado tapaba el borde del «+» y no se encontraba (el paso se detuvo **sin tirar**). Se
+resolvió buscándolo **junto al botón de tirar** y afinando los 5 mejores candidatos; ese fotograma real es ahora un test.
+
+![El «+» con una moneda encima](docs/evidence/plus-con-moneda.png)
+
+### Así se ve un fallo en el informe
+
+Solo los fallos ocupan sitio: esperado, observado, log del paso y captura real (aquí, un fallo **provocado a propósito**).
+
+![Tarjeta de fallo](docs/evidence/informe-fallo.png)
 
 ## Requirements
 

@@ -1,0 +1,30 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cómo se ve un fallo: demo de informe con un error provocado</title><style>
+:root{--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--line:#e1e0d9;--bg:#fcfcfb;--card:#fff;--accent:#2a78d6;--code:#f1f0ec}
+@media (prefers-color-scheme:dark){:root{--ink:#f4f3ee;--ink2:#c3c2b7;--muted:#898781;--line:#3a3a37;--bg:#1a1a19;--card:#222221;--accent:#3987e5;--code:#2c2c2a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{border-bottom:1px solid var(--line);background:var(--card)}header .in,main{max-width:1080px;margin:0 auto;padding:16px}
+header a{color:var(--ink2);text-decoration:none;margin-right:14px;font-size:14px;white-space:nowrap}header a.on{color:var(--accent);font-weight:600}
+nav{display:flex;flex-wrap:wrap;gap:4px 0}h1{font-size:30px;line-height:1.25;margin:24px 0 8px}h2{margin:36px 0 10px}h3{margin:24px 0 8px}
+a{color:var(--accent)}code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.9em}
+pre{background:var(--code);padding:14px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.45}pre code{background:none;padding:0}
+.table{overflow-x:auto;margin:12px 0}table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
+img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;display:block;margin:10px 0}figure{margin:16px 0}
+blockquote{margin:16px 0;padding:10px 16px;border-left:4px solid var(--accent);background:var(--card);color:var(--ink2)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:20px 0}
+.card{display:block;border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--card);text-decoration:none;color:var(--ink)}
+.card b{display:block;margin-bottom:4px}.card span{color:var(--ink2);font-size:14px}.foot{color:var(--muted);font-size:13px;margin:40px 0 20px}
+</style></head><body>
+<header><div class="in"><nav><a href="index.html" class="">Inicio</a><a href="01-escenario-1-tirada-completa.html" class="">01 · Escenario 1</a><a href="02-escenario-2-sin-saldo.html" class="">02 · Escenario 2</a><a href="03-series-de-tiradas.html" class="">03 · Series</a><a href="04-subir-apuesta.html" class="">04 · Subir apuesta</a><a href="05-informe-de-fallos.html" class="on">05 · Informe de fallos</a><a href="06-vision-y-ocr.html" class="">06 · Visión y OCR</a><a href="07-problemas-resueltos.html" class="">07 · Problemas resueltos</a><a href="08-calidad-y-arquitectura.html" class="">08 · Calidad y arquitectura</a></nav></div></header>
+<main><h1>Informe 5 — Cómo se ve un fallo: demo de informe con un error provocado</h1>
+<p><strong>Resultado: ✗ 2 fallos, provocados a propósito</strong> · ejecución real del 15/10/2026 (15:21–15:23, 2,1 min) · <code>npm run report:demo</code> (también es la última parte de <code>npm run all</code>, marcada como «fallo provocado, ESPERADO»).</p>
+<h2>Qué hace</h2>
+<ol><li>El recorrido es <strong>real</strong>: login, juego, sesión y una tirada a 0,10 € (CRÉDITO 105,82 → <strong>105,72 €</strong>).</li><li>Después, el CRÉDITO leído se <strong>altera en −1 €</strong> (<strong>104,72 €</strong>), como si el OCR hubiera leído mal. Una fila del informe lo declara: <strong>«FALLO PROVOCADO A PROPÓSITO»</strong>.</li><li>Con ese valor fallan las dos comprobaciones que deben detectarlo:</li></ol>
+<div class="table"><table><thead><tr><th>Comprobación</th><th>Esperado</th><th>Observado</th><th>Resultado</th></tr></thead><tbody><tr><td><code>money.game</code>: regla del saldo en el juego</td><td>105,82 − 0,10 + 0,00 = <strong>105,72 €</strong></td><td>«leído» <strong>104,72 €</strong> (−1 € inyectado)</td><td>✗</td></tr><tr><td><code>site.exitBalance</code>: juego frente al <strong>saldo de Betsson en la página (DOM)</strong></td><td>iguales</td><td>juego <strong>104,72 €</strong> · página <strong>105,72 €</strong> (releído 16 veces durante ~30 s)</td><td>✗</td></tr></tbody></table></div>
+<h2>El informe del fallo</h2>
+<p>Cada fallo es una tarjeta con <strong>esperado</strong>, <strong>observado</strong>, el <strong>log del paso</strong> y la <strong>captura real</strong>. En la captura se lee el CRÉDITO verdadero (105,72 €), así que se ve a simple vista que la pantalla dice una cosa y el valor usado otra. Los aciertos no ocupan sitio: solo se cuentan.</p>
+<figure><img src="../evidence/informe-fallo.png" alt="Tarjeta de fallo del informe" loading="lazy"></figure>
+<p><em>En la captura se ha tapado el ranking de torneos de la web (apodos de otros jugadores).</em></p>
+<h2>Por qué está en el proyecto</h2>
+<ul><li>Demuestra que las comprobaciones <strong>detectan</strong> un error real de lectura, no solo que pasan cuando todo va bien.</li><li>Enseña el formato del informe: <strong>solo los fallos, con su captura y el porqué</strong> (los aciertos se cuentan).</li><li>Está aislada: tiene su propio proyecto (<code>report-demo-betsson.es</code>) y en <code>npm run all</code> su fallo <strong>no cuenta</strong> como error.</li></ul><p class="foot">Intelligent Game Validation · Betsson × Malackathon 2026 · generado desde docs/reports/*.md (npm run reports:html)</p></main></body></html>
