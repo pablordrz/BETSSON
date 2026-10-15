@@ -16,6 +16,13 @@ const OWNERS = {
     'docs/presentation/**',
     'docs/WORK-SPLIT.md',
     'docs/ai-briefs/**',
+    // balance validations without spending money (zero-balance account, game vs header balance)
+    'src/steps/balance.steps.ts',
+    'src/pages/header-balance.ts',
+    'tests/balance/**',
+    'tests/unit/balance.spec.ts',
+    'tests/unit/fixtures/balance/**',
+    'docs/balance-validation.md',
   ],
   B: [
     'docs/vision-approaches.md',
@@ -55,7 +62,8 @@ const OWNERS = {
     'src/vision/hud.ts',
     'src/vision/ocr.ts',
     'src/vision/game-screen.ts',
-    'src/pages/**',
+    'src/pages/betsson-site.ts',
+    'src/pages/betsson-wallet.ts',
     '.env.example',
     'docs/demo-runbook.md',
     'tests/unit/fixtures/demo/**',

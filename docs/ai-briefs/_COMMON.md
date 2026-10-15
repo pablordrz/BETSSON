@@ -34,6 +34,7 @@ npm run unit              # todos en verde
 npm run browser:fresh     # Brave limpio (dejarlo abierto)
 npm run calibrate         # en vivo, SIN tirada
 npm run all               # TODO seguido (solo D, dinero real): tsc → unit → escenario 1 → escenario 2 → informe unido
+npm run balance           # validaciones de saldo SIN tiradas (A): cuenta sin saldo bloqueada, juego = cabecera
 ```
 
 **Cuentas** (solo en `.env`, nunca en el repo): `FUNDED_USER/PASS`, la cuenta **con saldo** (escenario 1), y `EMPTY_USER/PASS`, la cuenta **sin saldo** (escenario 2). Las credenciales se pasan por privado.
@@ -43,7 +44,8 @@ npm run all               # TODO seguido (solo D, dinero real): tsc → unit →
 | Escenario | Cuenta | Qué tiene que pasar (validado en pantalla) |
 |---|---|---|
 | **1 — Tirada completada** | con saldo | entra, lee el saldo, la apuesta y la moneda (EUR), tira con la apuesta mínima, la tirada empieza y termina, y `saldo después = antes − apuesta + premio` en el juego **y** en Betsson |
-| **2 — Usuario sin saldo: la tirada queda BLOQUEADA** | **sin saldo** | inicia sesión con la cuenta sin saldo, entra en el juego y lee su saldo. Al intentar tirar, **la tirada se rechaza** (los rodillos no giran), el jugador ve el **mensaje de saldo insuficiente en español**, y **ni el saldo del juego ni el de Betsson cambian** |
+| **2 — Usuario sin saldo: la tirada queda BLOQUEADA** (dueño: **A**) | **sin saldo** | inicia sesión con la cuenta sin saldo, entra en el juego y lee su saldo. Al intentar tirar, **la tirada se rechaza** (los rodillos no giran), el jugador ve el **mensaje de saldo insuficiente en español**, y **ni el saldo del juego ni el de Betsson cambian** |
+| **Saldo del juego = saldo de la cabecera** (dueño: **A**) | ambas | el CRÉDITO que se lee en el juego coincide con el saldo que muestra **la cabecera de Betsson** («arriba del menú») en la misma página, con tolerancia de 1 céntimo. Si no, el informe dice cuánto y por qué |
 | **Protección (todas las pruebas)** | cualquiera | **antes de cualquier tirada real**, `money.preflight` comprueba que CRÉDITO ≥ APUESTA y saldo de Betsson ≥ APUESTA. Si no se cumple, **el checker NO tira** y lo deja explicado en el informe. Así una cuenta sin saldo nunca intenta una tirada en el escenario 1, en la serie o en la demo |
 
 ## Reglas que NO se negocian
@@ -57,7 +59,10 @@ npm run all               # TODO seguido (solo D, dinero real): tsc → unit →
    En general, **todo archivo que no esté en la lista de nadie** (`scripts/check-ownership.cjs`) está congelado: `src/utils/{money,text,preflight}.ts`, `src/vision/{annotate,spin}.ts`, `tests/calibrate.spec.ts`, `tests/series/**`… Lo nuevo va en **archivos nuevos** dentro de tus rutas. Si de verdad hay que cambiar algo congelado, se hace en un PR pequeño aparte, acordado por el equipo.
 3. **Dependencias nuevas** (`npm install …`): solo las añade **D**, en un PR pequeño que se mergea antes que el tuyo. Si las necesitas, pídeselas a D. Nunca toques `package.json` ni `package-lock.json`.
 4. **Sin secretos**: nada de credenciales, cabeceras `x-obg-*`, `.env` ni `.auth/` en el código, los docs, las capturas o los commits.
-5. **Dinero real**: solo **D** ejecuta `npm test`, `npm run spins` y `npm run demo`. Los demás: `npm run unit`, `npm run calibrate` (sin tirada) y fotogramas guardados.
+5. **Dinero real**: solo **D** ejecuta pruebas que tiran (`npm test`, `npm run spins`, `npm run demo`, `npm run all`).
+   - **A** ejecuta en vivo las pruebas de saldo que **nunca tiran** (`npm run balance`) y el escenario 2 con la **cuenta sin saldo**.
+   - Los demás: `npm run unit`, `npm run calibrate` (sin tirada) y fotogramas guardados.
+   - **Nunca dos personas en vivo a la vez con la misma cuenta**: los saldos se mueven y las comparaciones fallan.
 6. **Juego responsable**: no cambies cómo se tratan el aviso ni los límites de la sesión de juego. Siempre las opciones más protectoras.
 7. **Firmas**: si optimizas un archivo tuyo que otros importan, **no cambies sus funciones exportadas** (nombre, parámetros ni tipo de retorno). Solo el interior.
 
@@ -73,7 +78,7 @@ npx tsc --noEmit && npm run unit               # DEBEN pasar
 git push -u origin <tu-rama>                   # y abrir el PR contra main
 ```
 
-Orden de merge: **dependencias de D (si las hay) → C → B → D → A**.
+Orden de merge: **dependencias de D (si las hay) → C → B → A → D**.
 
 ## Antes de abrir el PR
 
