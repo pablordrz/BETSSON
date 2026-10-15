@@ -16,6 +16,8 @@ const OWNERS = {
     'docs/presentation/**',
     'docs/WORK-SPLIT.md',
     'docs/ai-briefs/**',
+    'AGENTS.md',
+    'CLAUDE.md',
     // balance validations without spending money (zero-balance account, game vs header balance)
     'src/steps/balance.steps.ts',
     'src/pages/header-balance.ts',
