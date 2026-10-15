@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import type { GameLayout } from '../../config/game-layout';
 import type { MarketConfig } from '../../config/markets';
@@ -28,7 +29,10 @@ const TEMPLATES = path.resolve('assets', 'templates');
  * The player finds it by its look (image), the intro may also say CONTINUAR / PULSA… (text).
  */
 export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketConfig): GameControls {
-  const arrowsIcon = new TemplateTarget('round arrows button', path.join(TEMPLATES, 'pragmatic', 'spin.png'), { circular: true });
+  // Same two arrows in every game, the centre changes (empty, a logo, a gorilla with a crown…): one template per
+  // look, the best match wins. Add a new look as assets/templates/pragmatic/spin-<name>.png.
+  const spinLooks = fs.readdirSync(path.join(TEMPLATES, 'pragmatic')).filter((f) => /^spin.*\.png$/.test(f)).map((f) => path.join(TEMPLATES, 'pragmatic', f));
+  const arrowsIcon = new TemplateTarget('round arrows button', spinLooks, { circular: true });
   const continueText = allGameTexts.map((t) => t.continue.source).join('|');
   return {
     spinButton: arrowsIcon,

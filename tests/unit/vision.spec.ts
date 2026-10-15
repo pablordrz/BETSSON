@@ -7,7 +7,8 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import { gameTexts } from '../../src/config/game-text';
 import { detectCurrency, moneyEq, parseAmount, parseMoney } from '../../src/utils/money';
-import { parseHud, readHud } from '../../src/vision/hud';
+import { INTRO_SPIN_KEY_AFTER_MS, parseHud, readHud, shouldPressSpinOnIntro } from '../../src/vision/hud';
+import { pragmaticControls } from '../../src/vision/controls/game-controls';
 import { Ocr } from '../../src/vision/ocr';
 import { getMarket } from '../../src/config/markets';
 import { pragmaticLayout } from '../../src/config/game-layout';
@@ -137,3 +138,43 @@ test.describe('real Pragmatic frame (Triple Hop Pots, betsson.es)', () => {
     expect(m!.y).toBeCloseTo(570 / 683, 1);
   });
 });
+
+test.describe('intro: press the spin key when the spin/continue button is not recognised', () => {
+  const none = { credit: null, bet: null, win: null };
+  const label = { value: null, expectedLanguage: true, labelText: 'CREDITO', box: { x: 0, y: 0, w: 1, h: 1 } };
+
+  test('once, after the intro had time to show a HUD or the button', () => {
+    expect(shouldPressSpinOnIntro(false, none, 0, INTRO_SPIN_KEY_AFTER_MS - 1)).toBe(false);
+    expect(shouldPressSpinOnIntro(false, none, 0, INTRO_SPIN_KEY_AFTER_MS)).toBe(true);
+    expect(shouldPressSpinOnIntro(true, none, 0, INTRO_SPIN_KEY_AFTER_MS * 3)).toBe(false);
+  });
+
+  test('never once any HUD label is on screen (it would be a real spin)', () => {
+    expect(shouldPressSpinOnIntro(false, { ...none, credit: label }, 0, INTRO_SPIN_KEY_AFTER_MS * 3)).toBe(false);
+  });
+});
+
+test.describe('spin button looks across games (every assets/templates/pragmatic/spin*.png)', () => {
+  test.setTimeout(120_000);
+  const controls = () => pragmaticControls(pragmaticLayout, undefined as never, getMarket('es'));
+  const at = (file: string) => controls().spinButton.locate(fs.readFileSync(path.resolve('tests/unit/fixtures', file)));
+
+  test('plain arrows (Triple Hop Pots): found at the bottom centre', async () => {
+    const m = await at('pragmatic-triple-hop-pots.png');
+    expect(m).not.toBeNull();
+    expect(m!.x).toBeCloseTo(0.5, 1);
+    expect(m!.y).toBeCloseTo(0.83, 1);
+  });
+
+  test('arrows with a crowned gorilla in the centre: found where it is', async () => {
+    const m = await at('pragmatic-crown-spin.png');
+    expect(m).not.toBeNull();
+    expect(m!.x).toBeCloseTo(0.85, 1);
+    expect(m!.y).toBeCloseTo(0.5, 1);
+  });
+
+  test('no button on screen: nothing found (no false click)', async () => {
+    expect(await at('pragmatic-no-button.png')).toBeNull();
+  });
+});
+

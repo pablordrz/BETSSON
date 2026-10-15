@@ -1,4 +1,4 @@
-import { test as base, selectors } from '@playwright/test';
+import { test as base, selectors, type BrowserContext, type Page } from '@playwright/test';
 import { contextOptionsFor, loginToStorageState, type StorageState } from '../src/auth/login';
 import { cdpUrl, savedSession } from '../src/auth/session';
 import { applyTrustedTraffic } from '../src/auth/trusted-traffic';
@@ -111,8 +111,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       const context = browser.contexts()[0];
       // Fresh profile → the checker logs in itself, in that real browser (outside the trace: no password in it)
       selectors.setTestIdAttribute('data-test-id');
-      const lobby = new BetssonSite(context.pages()[0] ?? (await context.newPage()), market);
-      await lobby.open(lobby.entryPath()); // login (if needed) returns here: the game page or the Pragmatic Play page
+      // Same tab the `page` fixture will use: the open game, else any Betsson tab. Never navigate it away when
+      // it is already on Betsson (logged in, or in the game since the last run): only an empty tab goes to the site.
+      const tab = playerTab(context, market) ?? context.pages()[0] ?? (await context.newPage());
+      const lobby = new BetssonSite(tab, market);
+      if (!tab.url().startsWith(market.baseUrl)) await lobby.open(lobby.entryPath());
       if (!(await lobby.isLoggedIn())) {
         const creds = credentialsFor(market.id, account);
         if (!creds) testInfo.skip(true, `${market.site}: no credentials for the ${account} account`);
@@ -148,10 +151,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   // CDP mode: the tab where the player opened the game; otherwise a new tab.
   page: async ({ context, market }, use) => {
     // Reuse the tab where the login happened: a fresh tab may not carry the session (Betsson shows the login again).
-    const pages = cdpUrl() ? context.pages() : [];
-    const open =
-      pages.find((p) => new URL(p.url()).pathname.startsWith(market.gamePathPrefix)) ??
-      pages.find((p) => p.url().startsWith(market.baseUrl));
+    const open = cdpUrl() ? playerTab(context, market) : undefined;
     const page = open ?? (await context.newPage());
     if (open) await open.bringToFront();
     await use(page);
@@ -188,3 +188,12 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 });
 
 export { expect } from '@playwright/test';
+
+/** The player's tab in their own browser (CDP): the one showing a game, else any tab already on Betsson. */
+function playerTab(context: BrowserContext, market: MarketConfig): Page | undefined {
+  const pages = context.pages();
+  return (
+    pages.find((p) => p.url().startsWith(market.baseUrl) && new URL(p.url()).pathname.startsWith(market.gamePathPrefix)) ??
+    pages.find((p) => p.url().startsWith(market.baseUrl))
+  );
+}

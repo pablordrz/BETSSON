@@ -1,19 +1,18 @@
 /**
  * Series of Real Play spins at the minimum wager, to watch the balance evolve:  npm run spins  (SPINS=10)
- * Built from the same atomic steps as the scenarios; Betsson's balance is reconciled once at the end.
+ * Built from the same atomic steps as the scenarios; at the end the game is left and Betsson's balance on the page must equal the last in-game CREDIT.
  */
 import { balanceChart, type BalancePoint } from '../../src/reporter/balance-chart';
 import {
   attachGame,
   checkLoggedIn,
   enterGame,
+  exitGameBalanceMatches,
   goToGame,
   measureIdle,
   preflight,
   readBetssonBalance,
   readGameHud,
-  reconcileBetsson,
-  reconcileGame,
   setMinimumBet,
   spin,
   startGameSession,
@@ -40,26 +39,24 @@ test(`Spin series — ${SPINS} spins at the minimum wager`, async ({ steps, chec
   const { noise } = (await steps.must(measureIdle, { game })).data;
 
   const bet = start.bet;
+  // Optional spending cap: never spin when the wager read is above MAX_BET (e.g. the minimum could not be set)
+  const maxBet = Number(process.env.MAX_BET ?? Infinity);
+  test.skip(bet.amount > maxBet, `BET ${bet.amount.toFixed(2)} is above MAX_BET ${maxBet.toFixed(2)}: not spinning`);
   let credit = start.credit;
-  let wagered = 0;
-  let paid = 0;
   const points: BalancePoint[] = [{ label: 'start', balance: credit.amount }];
 
   for (let i = 1; i <= SPINS; i++) {
-    const safe = await steps.run(preflight, { credit, bet, betsson: { ...betssonStart, amount: betssonStart.amount - wagered + paid } });
+    const safe = await steps.run(preflight, { credit, bet, betsson: { ...betssonStart, amount: credit.amount } });
     if (!safe.ok) break;
     const started = await steps.run(spin, { game, credit, noise });
     if (!started.ok) break;
-    wagered += bet.amount;
     const end = await steps.run(waitSpinEnd, { game, noise });
     if (!end.data) break; // cannot continue without knowing the balance
-    await steps.run(reconcileGame, { before: credit, bet, after: end.data.credit, win: end.data.win });
-    paid += end.data.win?.amount ?? 0;
     credit = end.data.credit;
-    points.push({ label: `#${i}`, balance: credit.amount, payout: end.data.win?.amount || undefined });
+    points.push({ label: `#${i}`, balance: credit.amount });
   }
 
   await checks.image('balance-evolution', await balanceChart(points, `In-game balance · ${points.length - 1} spins · ${market.site}`, market.currency));
   await checks.json('balance-evolution', points);
-  await steps.run(reconcileBetsson, { start: betssonStart, wagered, paid });
+  await steps.run(exitGameBalanceMatches, { credit });
 });

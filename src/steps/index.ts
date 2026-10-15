@@ -5,5 +5,5 @@
 export { attemptRejectedSpin, enterGame, findGameMessage, measureIdle, readGameHud, setMinimumBet, spin, waitSpinEnd } from './game.steps';
 export { balanceUnchanged, preflight, reconcileBetsson, reconcileGame, wagerUsed } from './money.steps';
 export { StepRunner, type StepLogEntry, type StepResult } from './runner';
-export { attachGame, checkLoggedIn, goToGame, readBetssonBalance, startGameSession } from './site.steps';
+export { attachGame, checkLoggedIn, exitGameBalanceMatches, goToGame, readBetssonBalance, startGameSession } from './site.steps';
 export { defineStep, type Step, type StepContext, type StepOutcome } from './step';
