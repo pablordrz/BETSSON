@@ -1,333 +1,366 @@
 {
-  "generatedAt": "2026-10-15T15:23:26.891Z",
-  "overall": "failed",
+  "generatedAt": "2026-10-15T16:14:16.470Z",
+  "overall": "passed",
   "totals": {
-    "PASS": 46,
-    "FAIL": 2,
-    "INFO": 1
+    "PASS": 57,
+    "FAIL": 0,
+    "INFO": 0
   },
   "rows": [
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.loggedIn#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (0.1s)",
+      "actual": " (0.0s)",
       "step": "site.loggedIn",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.loggedIn#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Player is logged in (balance visible in the header)",
-      "actual": "balance visible in the header (0.1s)",
+      "actual": "balance visible in the header (0.0s)",
       "step": "site.loggedIn",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.loggedIn#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (0.1s)",
+      "actual": "validó, pero no devolvió datos (0.0s)",
       "step": "site.loggedIn",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.goToGame#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (7.9s)",
+      "actual": " (8.0s)",
       "step": "site.goToGame",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.goToGame#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Pragmatic Play game page opened",
-      "actual": "game \"triple-hop-pots\" · detail id game-detail-pragmaticPlayTripleHopPots (7.9s)",
+      "actual": "game \"triple-hop-pots\" · detail id game-detail-pragmaticPlayTripleHopPots (8.0s)",
       "step": "site.goToGame",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.goToGame#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (7.9s)",
+      "actual": "validó, pero no devolvió datos (8.0s)",
       "step": "site.goToGame",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.goToGame#4",
       "title": "Se abrió la ficha de un juego",
       "status": "PASS",
       "expected": "slug del juego",
-      "actual": "juego: triple-hop-pots (7.9s)",
+      "actual": "juego: triple-hop-pots (8.0s)",
       "step": "site.goToGame",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.goToGame#5",
       "title": "El juego es de Pragmatic Play",
       "status": "PASS",
       "expected": "game-detail-pragmaticPlay…",
-      "actual": "ficha: game-detail-pragmaticPlayTripleHopPots (7.9s)",
+      "actual": "ficha: game-detail-pragmaticPlayTripleHopPots (8.0s)",
       "step": "site.goToGame",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.gameSession#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (2.1s)",
+      "actual": " (5.0s)",
       "step": "site.gameSession",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.gameSession#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Regulated game session started (5 h play time, lowest loss limit)",
-      "actual": "responsible-gambling notice acknowledged → game-session limits: play time \"5 Horas\", loss limit \"25% (26,46 €)\" (2.1s)",
+      "actual": "not needed (session already active) (5.0s)",
       "step": "site.gameSession",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "site.gameSession#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (2.1s)",
+      "actual": "validó, pero no devolvió datos (5.0s)",
       "step": "site.gameSession",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.attach#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (5.3s)",
+      "actual": " (5.0s)",
       "step": "game.attach",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.attach#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Game canvas visible and rendered",
-      "actual": "canvas rendered (5.3s)",
+      "actual": "canvas rendered (5.0s)",
       "step": "game.attach",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.attach#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (5.3s)",
+      "actual": "validó, pero no devolvió datos (5.0s)",
       "step": "game.attach",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.enter#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (32.3s)",
+      "actual": " (7.0s)",
       "step": "game.enter",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.enter#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Game started: intro passed, CREDIT and BET readable",
-      "actual": "playable in 32.3s · CREDIT 105.82 EUR [read: \"105,82 €\"] · BET 0.10 EUR [read: \"0,10 €\"] (32.3s)",
+      "actual": "playable in 7.0s · CREDIT 104.60 EUR [read: \"104,60 €\"] · BET 0.10 EUR [read: \"0,10 €\"] (7.0s)",
       "step": "game.enter",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.enter#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (32.3s)",
+      "actual": "validó, pero no devolvió datos (7.0s)",
       "step": "game.enter",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.minBet#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (7.4s)",
+      "actual": " (8.7s)",
       "step": "game.minBet",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.minBet#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Wager lowered to the game minimum",
-      "actual": "BET 0.10 EUR [read: \"0,10 €\"] → 0.10 EUR [read: \"0,10 €\"] (7.4s)",
+      "actual": "BET 0.10 EUR [read: \"0,10 €\"] → 0.10 EUR [read: \"0,10 €\"] (\"−\" not available: already at the minimum?) (8.7s)",
       "step": "game.minBet",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.minBet#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (7.4s)",
+      "actual": "validó, pero no devolvió datos (8.7s)",
       "step": "game.minBet",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.raiseBet#1",
+      "title": "El paso termina sin errores",
+      "status": "PASS",
+      "expected": "sin excepciones",
+      "actual": " (10.0s)",
+      "step": "game.raiseBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.raiseBet#2",
+      "title": "Valida en pantalla lo que promete",
+      "status": "PASS",
+      "expected": "Wager raised with \"+\" (read on screen, never above the cap)",
+      "actual": "BET 0.10 EUR [read: \"0,10 €\"] → 0.20 EUR [read: \"0,20 €\"] after 1 \"+\" press(es) · cap 0.50 EUR (10.0s)",
+      "step": "game.raiseBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.raiseBet#3",
+      "title": "Entrega sus datos al siguiente paso",
+      "status": "PASS",
+      "expected": "datos del paso",
+      "actual": "validó, pero no devolvió datos (10.0s)",
+      "step": "game.raiseBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "betsson.readBalance#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (3.7s)",
+      "actual": " (3.6s)",
       "step": "betsson.readBalance",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "betsson.readBalance#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Betsson balance read in the market currency",
-      "actual": "105.82 EUR [read: \"105,82 €\"] (3.7s)",
+      "actual": "104.60 EUR [read: \"104,60 €\"] (3.6s)",
       "step": "betsson.readBalance",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "betsson.readBalance#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (3.7s)",
+      "actual": "validó, pero no devolvió datos (3.6s)",
       "step": "betsson.readBalance",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (2.7s)",
+      "actual": " (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "CREDIT and BET read (stable, market currency and language)",
-      "actual": "CREDIT 105.82 EUR [read: \"105,82 €\"] · BET 0.10 EUR [read: \"0,10 €\"] (2.7s)",
+      "actual": "CREDIT 104.60 EUR [read: \"104,60 €\"] · BET 0.20 EUR [read: \"0,20 €\"] (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (2.7s)",
+      "actual": "validó, pero no devolvió datos (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#4",
       "title": "CRÉDITO en la moneda del mercado",
       "status": "PASS",
       "expected": "EUR",
-      "actual": "CRÉDITO leído: 105.82 EUR [read: \"105,82 €\"] (2.7s)",
+      "actual": "CRÉDITO leído: 104.60 EUR [read: \"104,60 €\"] (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#5",
       "title": "APUESTA en la moneda del mercado",
       "status": "PASS",
       "expected": "EUR",
-      "actual": "APUESTA leída: 0.10 EUR [read: \"0,10 €\"] (2.7s)",
+      "actual": "APUESTA leída: 0.20 EUR [read: \"0,20 €\"] (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.readHud#6",
       "title": "APUESTA mayor que 0",
       "status": "PASS",
       "expected": "APUESTA mayor que 0",
-      "actual": "APUESTA leída: 0.10 EUR [read: \"0,10 €\"] (2.7s)",
+      "actual": "APUESTA leída: 0.20 EUR [read: \"0,20 €\"] (2.6s)",
       "step": "game.readHud",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.preflight#1",
       "title": "El paso termina sin errores",
@@ -335,21 +368,21 @@
       "expected": "sin excepciones",
       "actual": " (0.0s)",
       "step": "money.preflight",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.preflight#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Safe to spin: balance and wager read, market currency, wager affordable",
-      "actual": "CREDIT 105.82 EUR [read: \"105,82 €\"] · BET 0.10 EUR [read: \"0,10 €\"] · Betsson 105.82 EUR [read: \"105,82 €\"] (0.0s)",
+      "actual": "CREDIT 104.60 EUR [read: \"104,60 €\"] · BET 0.20 EUR [read: \"0,20 €\"] · Betsson 104.60 EUR [read: \"104,60 €\"] (0.0s)",
       "step": "money.preflight",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.preflight#3",
       "title": "Entrega sus datos al siguiente paso",
@@ -357,131 +390,153 @@
       "expected": "datos del paso",
       "actual": "validó, pero no devolvió datos (0.0s)",
       "step": "money.preflight",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.idleNoise#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (2.4s)",
+      "actual": " (2.8s)",
       "step": "game.idleNoise",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.idleNoise#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Idle animation level measured",
-      "actual": "idle change 2.6% (2.4s)",
+      "actual": "idle change 0.7% (2.8s)",
       "step": "game.idleNoise",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.idleNoise#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (2.4s)",
+      "actual": "validó, pero no devolvió datos (2.8s)",
       "step": "game.idleNoise",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spin#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (3.6s)",
+      "actual": " (4.4s)",
       "step": "game.spin",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spin#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Spin started (reels moved after pressing spin)",
-      "actual": "click round arrows button: clicked round arrows button found by image (spin-crown.png) at (0.50, 0.83), score 0.86, scale 1.03 (located by round spin button (Hough), confirmed by image); reels moved 10.7% (idle 2.6%) (3.6s)",
+      "actual": "click round arrows button: clicked round arrows button found by image (spin-crown.png) at (0.50, 0.83), score 0.85, scale 1.02 (located by round spin button (Hough), confirmed by image); reels moved 14.7% (idle 0.7%) (4.4s)",
       "step": "game.spin",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spin#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (3.6s)",
+      "actual": "validó, pero no devolvió datos (4.4s)",
       "step": "game.spin",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spin#4",
       "title": "La tirada se dispara una sola vez",
       "status": "PASS",
       "expected": "1 tirada",
-      "actual": "1 tirada(s) detectada(s): click round arrows button → sí (3.6s)",
+      "actual": "1 tirada(s) detectada(s): click round arrows button → sí (4.4s)",
       "step": "game.spin",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spinEnd#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (6.4s)",
+      "actual": " (7.0s)",
       "step": "game.spinEnd",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spinEnd#2",
       "title": "Valida en pantalla lo que promete",
       "status": "PASS",
       "expected": "Spin completed and settled on screen",
-      "actual": "settled in 6.2s · animation still playing (reels change 4.3%), CREDIT 105.72 stable for 5 reads, spin button available · CREDIT 105.72 EUR [read: \"105,72 €\"] (6.4s)",
+      "actual": "settled in 6.9s · animation still playing (reels change 3.6%), CREDIT 104.40 stable for 5 reads, spin button available · CREDIT 104.40 EUR [read: \"104,40 €\"] (7.0s)",
       "step": "game.spinEnd",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "game.spinEnd#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (6.4s)",
+      "actual": "validó, pero no devolvió datos (7.0s)",
       "step": "game.spinEnd",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
-      "id": "demo.faultInjection",
-      "title": "FALLO PROVOCADO A PROPÓSITO: el CRÉDITO leído se altera para enseñar cómo es el informe",
-      "status": "INFO",
-      "expected": "CRÉDITO leído en pantalla: 105.72 EUR [read: \"105,72 €\"]",
-      "actual": "CRÉDITO usado a partir de aquí: 104.72 EUR [read: \"105,72 € (−1 € inyectado)\"] (-1 €)",
-      "note": "Este test no forma parte de los escenarios: existe solo para mostrar un fallo en el informe.",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "id": "money.wagerUsed#1",
+      "title": "El paso termina sin errores",
+      "status": "PASS",
+      "expected": "sin excepciones",
+      "actual": " (0.0s)",
+      "step": "money.wagerUsed",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "money.wagerUsed#2",
+      "title": "Valida en pantalla lo que promete",
+      "status": "PASS",
+      "expected": "Displayed wager is the wager used for the spin",
+      "actual": "BET shown 0.20 EUR [read: \"0,20 €\"] → after 0.20 EUR [read: \"0,20 €\"] · debited 0.20 (0.0s)",
+      "step": "money.wagerUsed",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "money.wagerUsed#3",
+      "title": "Entrega sus datos al siguiente paso",
+      "status": "PASS",
+      "expected": "datos del paso",
+      "actual": "validó, pero no devolvió datos (0.0s)",
+      "step": "money.wagerUsed",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.game#1",
       "title": "El paso termina sin errores",
@@ -489,30 +544,21 @@
       "expected": "sin excepciones",
       "actual": " (0.0s)",
       "step": "money.game",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.game#2",
       "title": "Valida en pantalla lo que promete",
-      "status": "FAIL",
+      "status": "PASS",
       "expected": "In-game balance: after = before − wager + payout",
-      "actual": "105.82 − 0.10 + 0.00 = 105.72 EUR · read 104.72 EUR [read: \"105,72 € (−1 € inyectado)\"] · observed payout -1.00",
+      "actual": "104.60 − 0.20 + 0.00 = 104.40 EUR · read 104.40 EUR [read: \"104,40 €\"] (0.0s)",
       "step": "money.game",
-      "evidence": [
-        "money.game · pantalla"
-      ],
-      "log": [
-        "15:22:37 · MISMATCH {\"before\":105.82,\"bet\":0.1,\"payout\":0,\"after\":104.72,\"observedPayout\":-1}"
-      ],
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71",
-      "images": [
-        "evidence/1-money.game_pantalla.png"
-      ]
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
       "id": "money.game#3",
       "title": "Entrega sus datos al siguiente paso",
@@ -520,49 +566,73 @@
       "expected": "datos del paso",
       "actual": "validó, pero no devolvió datos (0.0s)",
       "step": "money.game",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
-      "id": "site.exitBalance#1",
+      "id": "money.betsson#1",
       "title": "El paso termina sin errores",
       "status": "PASS",
       "expected": "sin excepciones",
-      "actual": " (33.6s)",
-      "step": "site.exitBalance",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "actual": " (4.2s)",
+      "step": "money.betsson",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
-      "id": "site.exitBalance#2",
+      "id": "money.betsson#2",
       "title": "Valida en pantalla lo que promete",
-      "status": "FAIL",
-      "expected": "After leaving the game, Betsson balance (page) = last in-game CREDIT",
-      "actual": "in-game CREDIT 104.72 EUR [read: \"105,72 € (−1 € inyectado)\"] · Betsson page 105.72 EUR [read: \"105,72 €\"] (16 reads) · MISMATCH",
-      "step": "site.exitBalance",
-      "evidence": [
-        "site.exitBalance · Betsson balance"
-      ],
-      "log": [
-        "15:23:11 · header balance after leaving the game {\"read\":\"105,72 €\",\"credit\":104.72,\"reads\":16}"
-      ],
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71",
-      "images": [
-        "evidence/2-site.exitBalance_Betsson_balance.png"
-      ]
+      "status": "PASS",
+      "expected": "Betsson balance reconciles with wagers and payouts",
+      "actual": "104.60 − 0.20 + 0.00 = 104.40 EUR · read 104.40 EUR [read: \"104,40 €\"] (1 reads) (4.2s)",
+      "step": "money.betsson",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     },
     {
-      "scenario": "DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos",
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
       "market": "betsson.es",
-      "id": "site.exitBalance#3",
+      "id": "money.betsson#3",
       "title": "Entrega sus datos al siguiente paso",
       "status": "PASS",
       "expected": "datos del paso",
-      "actual": "validó, pero no devolvió datos (33.6s)",
-      "step": "site.exitBalance",
-      "testId": "07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71"
+      "actual": "validó, pero no devolvió datos (4.2s)",
+      "step": "money.betsson",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.minBet#1",
+      "title": "El paso termina sin errores",
+      "status": "PASS",
+      "expected": "sin excepciones",
+      "actual": " (9.7s)",
+      "step": "game.minBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.minBet#2",
+      "title": "Valida en pantalla lo que promete",
+      "status": "PASS",
+      "expected": "Wager lowered to the game minimum",
+      "actual": "BET 0.20 EUR [read: \"0,20 €\"] → 0.10 EUR [read: \"0,10 €\"] (9.7s)",
+      "step": "game.minBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
+    },
+    {
+      "scenario": "Raise the wager with \"+\" (1 step(s), cap 0.50 €) and spin once",
+      "market": "betsson.es",
+      "id": "game.minBet#3",
+      "title": "Entrega sus datos al siguiente paso",
+      "status": "PASS",
+      "expected": "datos del paso",
+      "actual": "validó, pero no devolvió datos (9.7s)",
+      "step": "game.minBet",
+      "testId": "4ff16a42036804964136-95639a10401cf7cd37c4"
     }
   ]
 }

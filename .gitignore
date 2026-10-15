@@ -11,3 +11,9 @@ all-blob-reports/
 # Reports, evidence and calibration ARE versioned (reports/, site/, calibration/, test-results/), EXCEPT
 # Playwright traces: > 100 MB each (GitHub's limit) and they record network requests, session cookies included.
 *.zip
+
+# CI build folders (scripts/ci-*.cjs)
+out/
+pages/
+offline/
+live/
