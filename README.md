@@ -33,10 +33,6 @@ Bonus cross-checks (reported as `INFO`, never the proof): provider server respon
 npm ci
 cp .env.example .env      # then add the two passwords (see "Configuration: .env"); never commit .env
 
-npm run calibrate         # NO spin: logs in, opens the game, dumps what the checker sees
-npm test                  # both scenarios on betsson.es  (⚠ Real Play spin)
-npm run report            # open the Playwright report
-npm run unit              # offline tests of the pure parsing / vision helpers
 ```
 
 Reports: `reports/index.html` (pass/fail per check and scenario) and `reports/playwright/` (screenshots with OCR regions
@@ -66,10 +62,6 @@ cp .env.example .env
 | `GAME_SLUG` | `triple-hop-pots` | Pragmatic Play game to test (empty = first slot of the Pragmatic Play page) |
 | `EXTRA_HTTP_HEADERS` | Betsson `x-obg-*` headers (JSON) | Mark the traffic as test traffic; sent only to the Betsson domain |
 | `BRAVE_PATH`, `PROXY_*` | commented out | Optional: Brave installed in a non-standard folder, a proxy |
-
-- **Passwords never go into the repository**: `.env` is gitignored; only `.env.example` (without passwords) is versioned.
-- `.env.example` contains the test accounts' **user names** and the `x-obg-*` headers. If the repository is made
-  public, empty `EXTRA_HTTP_HEADERS` in `.env.example` and share it privately, like the passwords.
 
 ## Run everything in one go: `npm run all`
 
