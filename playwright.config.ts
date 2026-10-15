@@ -45,6 +45,8 @@ export default defineConfig<TestOptions, WorkerOptions>({
     { name: `report-demo-${es.site}`, testMatch: /report-demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     // raise the wager with "+" and spin once at it — npm run bet:raise
     { name: `bet-${es.site}`, testMatch: /[\\/]bet[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
+    // another Pragmatic Play game (OTHER_GAME, default helios-triple-sun) — npm run game:other
+    { name: `other-game-${es.site}`, testMatch: /other-game[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     { name: `demo-${es.site}`, testMatch: /[\\/]demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     { name: `login-${es.site}`, testMatch: /login-manual\.spec\.ts$/, use: { marketId: 'es' } },
     { name: 'unit', testMatch: /unit[\\/].*\.spec\.ts$/ },

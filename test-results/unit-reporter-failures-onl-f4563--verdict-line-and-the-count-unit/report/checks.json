@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-10-15T17:20:46.673Z",
+  "overall": "failed",
+  "totals": {
+    "PASS": 2,
+    "FAIL": 0,
+    "INFO": 0
+  },
+  "rows": [
+    {
+      "scenario": "Scenario 1",
+      "market": "betsson.es",
+      "id": "x",
+      "title": "x",
+      "status": "PASS",
+      "expected": "",
+      "actual": "",
+      "testId": "t1"
+    },
+    {
+      "scenario": "Scenario 1",
+      "market": "betsson.es",
+      "id": "x",
+      "title": "x",
+      "status": "PASS",
+      "expected": "",
+      "actual": "",
+      "testId": "t1"
+    }
+  ]
+}

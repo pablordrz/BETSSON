@@ -7,7 +7,7 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import { gameTexts } from '../../src/config/game-text';
 import { detectCurrency, moneyEq, parseAmount, parseMoney } from '../../src/utils/money';
-import { INTRO_SPIN_KEY_AFTER_MS, parseHud, readHud, shouldPressSpinOnIntro } from '../../src/vision/hud';
+import { INTRO_SPIN_KEY_AFTER_MS, parseHud, parseHudAmount, readHud, readWinAboveHud, shouldPressSpinOnIntro } from '../../src/vision/hud';
 import { pragmaticControls } from '../../src/vision/controls/game-controls';
 import { Ocr } from '../../src/vision/ocr';
 import { getMarket } from '../../src/config/markets';
@@ -56,9 +56,30 @@ test.describe('HUD parsing', () => {
     expect(hud.bet?.value?.amount).toBe(1);
     expect(hud.credit?.expectedLanguage).toBe(false);
   });
+  test('a label with no value never takes the amount of the next label below (Helios, live)', () => {
+    const rows = groupRows([w('CRÉDITO', 10, 480), w('APUESTA', 10, 510), w('0;20', 80, 510), w('€', 120, 510, 10)]);
+    const hud = parseHud(rows, gameTexts.Spanish);
+    expect(hud.credit?.value ?? null).toBeNull();
+    expect(hud.bet?.value?.amount).toBe(0.2);
+  });
   test('glued label and value', () => {
     const hud = parseHud(groupRows([w('CREDITO50,00€', 10, 500, 140)]), gameTexts.Spanish);
     expect(hud.credit?.value?.amount).toBe(50);
+  });
+});
+
+test.describe('HUD amounts (strict: two decimals)', () => {
+  test('reads money, tolerates ";" for the comma and "€" read as a trailing 0', () => {
+    expect(parseHudAmount('96,76 €')).toMatchObject({ amount: 96.76, currency: 'EUR' });
+    expect(parseHudAmount('- 0;20 € — HAGA SU APUESTA')).toMatchObject({ amount: 0.2, currency: 'EUR' });
+    expect(parseHudAmount('95,760')).toMatchObject({ amount: 95.76, currency: 'EUR' });
+    expect(parseHudAmount('1.234,56 €')?.amount).toBe(1234.56);
+    expect(parseHudAmount('CREDITO 95, 76€ > ¡HAGA SU APUESTA!')).toMatchObject({ amount: 95.76, currency: 'EUR' }); // live Helios read
+  });
+  test('round ids, clock times and digit runs are NOT money', () => {
+    expect(parseHudAmount('4106767524685119')).toBeNull();
+    expect(parseHudAmount('HELIOS - TRIPLE SUN 18:45')).toBeNull();
+    expect(parseHudAmount('95760')).toBeNull();
   });
 });
 
@@ -103,6 +124,50 @@ test.describe('vision', () => {
       .toBuffer();
     const target = new TemplateTarget('round arrows button', path.resolve('assets/templates/pragmatic/spin.png'), { circular: true });
     expect(await target.locate(screen)).toBeNull();
+  });
+});
+
+test.describe('real Pragmatic frame (Helios Triple Sun, betsson.es)', () => {
+  test('HUD: CRÉDITO 96,76 € and APUESTA 0,20 € are read, labels on light artwork included', async () => {
+    test.setTimeout(90_000);
+    const ocr = new Ocr();
+    try {
+      const frame = fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-bet-panel.png'));
+      const hud = await readHud(undefined as never, ocr, getMarket('es'), pragmaticLayout, frame);
+      expect(hud.credit?.value).toMatchObject({ amount: 96.76, currency: 'EUR' });
+      expect(hud.bet?.value).toMatchObject({ amount: 0.2, currency: 'EUR' });
+      expect(hud.credit?.expectedLanguage).toBe(true);
+      expect(hud.bet?.expectedLanguage).toBe(true);
+    } finally {
+      await ocr.terminate();
+    }
+  });
+});
+
+test.describe('real Pragmatic frame after a winning spin (Triple Hop Pots, live)', () => {
+  test('GANANCIA 0,05 € painted above the HUD band is read; CRÉDITO 95,51 € and APUESTA 0,10 € too', async () => {
+    test.setTimeout(90_000);
+    const ocr = new Ocr();
+    try {
+      const frame = fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-win-above-hud.png'));
+      const hud = await readHud(undefined as never, ocr, getMarket('es'), pragmaticLayout, frame);
+      expect(hud.credit?.value).toMatchObject({ amount: 95.51, currency: 'EUR' });
+      expect(hud.bet?.value).toMatchObject({ amount: 0.1, currency: 'EUR' });
+      const win = await readWinAboveHud(frame, ocr, getMarket('es'), pragmaticLayout);
+      expect(win?.value).toMatchObject({ amount: 0.05, currency: 'EUR' });
+    } finally {
+      await ocr.terminate();
+    }
+  });
+  test('no win above the HUD on a frame without a win', async () => {
+    test.setTimeout(60_000);
+    const ocr = new Ocr();
+    try {
+      const frame = fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-triple-hop-pots.png'));
+      expect(await readWinAboveHud(frame, ocr, getMarket('es'), pragmaticLayout)).toBeNull();
+    } finally {
+      await ocr.terminate();
+    }
   });
 });
 
@@ -199,5 +264,25 @@ test.describe('spin button looks across games (every assets/templates/pragmatic/
   test('no button on screen: nothing found (no false click)', async () => {
     expect(await at('pragmatic-no-button.png')).toBeNull();
   });
-});
 
+  test('panel close "X" found on the open bet panel of Helios Triple Sun, and nowhere on frames without a panel', async () => {
+    const layout = { frameUrl: /x/, hud: { x: 0, y: 0.8, w: 1, h: 0.2 }, reels: { x: 0, y: 0, w: 1, h: 1 }, spinButton: { x: 0.5, y: 0.8 } };
+    const close = () => pragmaticControls(layout, {} as Ocr, getMarket('es')).closeButton; // fresh: no remembered position
+    // tests/unit/fixtures/pragmatic-bet-panel.png: live frame (1505×850) where the bet panel stayed open
+    const panel = await close().locate(fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-bet-panel.png')));
+    expect(panel, '"X" of the open bet panel').not.toBeNull();
+    expect(Math.abs(panel!.x * 1505 - 1318)).toBeLessThan(8);
+    expect(Math.abs(panel!.y * 850 - 133)).toBeLessThan(8);
+    for (const f of ['pragmatic-triple-hop-pots.png', 'pragmatic-plus-live.png', 'vision/intro-triple-hop-pots.png']) {
+      expect(await close().locate(fs.readFileSync(path.resolve('tests/unit/fixtures', f))), `no "X" on ${f}`).toBeNull();
+    }
+  });
+
+  test('Helios Triple Sun: its spin button (arrows around a sun) is found by image', async () => {
+    const layout = { frameUrl: /x/, hud: { x: 0, y: 0.8, w: 1, h: 0.2 }, reels: { x: 0, y: 0, w: 1, h: 1 }, spinButton: { x: 0.5, y: 0.8 } };
+    const spin = await pragmaticControls(layout, {} as Ocr, getMarket('es')).spinButton.locate(fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-bet-panel.png')));
+    expect(spin, 'Helios spin button').not.toBeNull();
+    expect(Math.abs(spin!.x * 1505 - 1165)).toBeLessThan(12);
+    expect(Math.abs(spin!.y * 850 - 766)).toBeLessThan(12);
+  });
+});

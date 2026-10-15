@@ -31,4 +31,10 @@ test.describe('pre-spin guard', () => {
     expect(p.ok).toBe(false);
     expect(p.reasons.join()).toMatch(/CREDIT in no currency/);
   });
+
+  test('blocks when the in-game CREDIT differs from the Betsson balance (a misread, e.g. the BET taken as CREDIT)', () => {
+    const p = spinPreflight({ credit: eur('0,20 €'), bet: eur('0,20 €'), betsson: eur('95,76 €'), currency: 'EUR' });
+    expect(p.ok).toBe(false);
+    expect(p.reasons.join()).toMatch(/CREDIT 0\.20 ≠ Betsson balance 95\.76/);
+  });
 });

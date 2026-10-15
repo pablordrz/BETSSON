@@ -3,6 +3,7 @@ import { fmt, moneyEq, type Money } from '../utils/money';
 import { normalize, pct, sleep } from '../utils/text';
 import { annotate } from '../vision/annotate';
 import { pressRepeatedly } from '../vision/bet';
+import { closeOpenPanels } from '../vision/panels';
 import type { GameScreen } from '../vision/game-screen';
 import { findMessage, readHud, readHudStable, shouldPressSpinOnIntro, type HudReading } from '../vision/hud';
 import { measureIdleNoise, waitForMotion } from '../vision/motion';
@@ -88,6 +89,8 @@ export const setMinimumBet = defineStep<{ game: GameScreen; presses?: number }, 
     const pressedOk = await pressRepeatedly(game, controls.betDown, presses);
     log(pressedOk ? `"−" pressed ${presses} times` : '"−" button not visible', { before: before?.amount });
     await sleep(800); // a burst of presses: let the HUD settle before reading it
+    // some games open a bet panel from a control next to the spin button: close it before reading the HUD
+    const panels = await closeOpenPanels(game, controls.closeButton, log);
     const { reading, stable } = await readHudStable(game, ocr, market, layout, 5);
     const bet = reading.bet?.value;
     // safety: changing the wager must never charge anything (a press on the wrong control could start a spin)
@@ -95,10 +98,10 @@ export const setMinimumBet = defineStep<{ game: GameScreen; presses?: number }, 
     const charged = !!creditBefore && !!credit && !moneyEq(credit.amount, creditBefore.amount);
     if (charged) log('CREDIT CHANGED while lowering the wager', { before: creditBefore?.amount, after: credit?.amount });
     // At the minimum the "−" button is greyed out: pressing it does nothing — fine as long as BET did not go up.
-    const ok = !!bet && stable && !charged && (!before || bet.amount <= before.amount);
+    const ok = !!bet && stable && !charged && !panels.stillOpen && (!before || bet.amount <= before.amount);
     return {
       ok,
-      detail: `BET ${fmt(before)} → ${fmt(bet)}${pressedOk ? '' : ' ("−" not available: already at the minimum?)'}${stable ? '' : ' · reads NOT stable'}${charged ? ` · CREDIT CHANGED ${fmt(creditBefore)} → ${fmt(credit)}` : ''}`,
+      detail: `BET ${fmt(before)} → ${fmt(bet)}${pressedOk ? '' : ' ("−" not available: already at the minimum?)'}${stable ? '' : ' · reads NOT stable'}${charged ? ` · CREDIT CHANGED ${fmt(creditBefore)} → ${fmt(credit)}` : ''}${panels.actions.length ? ` · ${panels.actions.join('; ')}` : ''}${panels.stillOpen ? ' · a panel is STILL OPEN' : ''}`,
       data: bet ? { before, bet } : undefined,
     };
   },
@@ -131,6 +134,7 @@ export const raiseBet = defineStep<{ game: GameScreen; presses?: number; maxBet:
       await game.clickRel(plus.x, plus.y);
       pressed++;
       await sleep(600);
+      await closeOpenPanels(game, controls.closeButton, log); // a press may have opened the game's bet panel
       const after = await readHudStable(game, ocr, market, layout, 5);
       const now = after.reading.bet?.value;
       log(`"+" pressed (${pressed}/${presses})`, { bet: now?.amount, how: plus.detail });
@@ -162,6 +166,23 @@ export const raiseBet = defineStep<{ game: GameScreen; presses?: number; maxBet:
       ok,
       detail: `BET ${fmt(before)} → ${fmt(bet)} after ${pressed} "+" press(es) · cap ${maxBet.toFixed(2)} ${market.currency}${capped ? ' (one step undone: above the cap)' : ''}`,
       data: { before, bet, pressed },
+    };
+  },
+});
+
+/**
+ * No game panel left open (bet settings, info…): close each one with its "X", like a player, and check on screen
+ * that none is visible any more. An open panel hides the reels and the HUD.
+ */
+export const closePanels = defineStep<{ game: GameScreen }, { actions: string[] }>({
+  id: 'game.closePanels',
+  title: 'No game panel open over the reels (closed with its "X")',
+  async run({ controls, log }, { game }) {
+    const { actions, stillOpen } = await closeOpenPanels(game, controls.closeButton, log);
+    return {
+      ok: !stillOpen,
+      detail: stillOpen ? `a panel is still open after: ${actions.join('; ')}` : actions.join('; ') || 'no panel open',
+      data: { actions },
     };
   },
 });

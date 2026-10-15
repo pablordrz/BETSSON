@@ -1,0 +1,32 @@
+{"at":"2026-10-15T17:17:32.844Z","step":"site.loggedIn","event":"start","message":"Player is logged in (balance visible in the header)"}
+{"at":"2026-10-15T17:17:32.871Z","step":"site.loggedIn","event":"log","message":"header shows the balance"}
+{"at":"2026-10-15T17:17:32.871Z","step":"site.loggedIn","event":"pass","message":"balance visible in the header","data":{"loggedIn":true},"ms":27}
+{"at":"2026-10-15T17:17:33.093Z","step":"site.openGame","event":"start","message":"Requested Pragmatic Play game page opened","data":{"slug":"helios-triple-sun"}}
+{"at":"2026-10-15T17:17:42.775Z","step":"site.openGame","event":"log","message":"game page","data":{"asked":"helios-triple-sun","slug":"helios-triple-sun","detailId":"game-detail-pragmaticPlayHeliosTripleSun"}}
+{"at":"2026-10-15T17:17:42.776Z","step":"site.openGame","event":"pass","message":"asked \"helios-triple-sun\" · opened \"helios-triple-sun\" · detail id game-detail-pragmaticPlayHeliosTripleSun","data":{"slug":"helios-triple-sun","gameDetailId":"game-detail-pragmaticPlayHeliosTripleSun"},"ms":9683}
+{"at":"2026-10-15T17:17:42.783Z","step":"site.gameSession","event":"start","message":"Regulated game session started (5 h play time, lowest loss limit)"}
+{"at":"2026-10-15T17:17:48.568Z","step":"site.gameSession","event":"pass","message":"not needed (session already active)","ms":5785}
+{"at":"2026-10-15T17:17:48.579Z","step":"game.attach","event":"start","message":"Game canvas visible and rendered"}
+{"at":"2026-10-15T17:17:52.995Z","step":"game.attach","event":"log","message":"canvas","data":{"frameUrl":"about:srcdoc","stdev":79.2}}
+{"at":"2026-10-15T17:17:52.996Z","step":"game.attach","event":"pass","message":"canvas rendered","ms":4416}
+{"at":"2026-10-15T17:17:53.020Z","step":"game.enter","event":"start","message":"Game started: intro passed, CREDIT and BET readable"}
+{"at":"2026-10-15T17:17:59.857Z","step":"game.enter","event":"log","message":"intro/loading screen (HUD not readable)","data":{"hud":"Y > $ LS > A a _ A Ni E. > 7 - — * NN A 4 .\nMM AMIA E U A A Tu IF CTA | )"}}
+{"at":"2026-10-15T17:18:08.933Z","step":"game.enter","event":"log","message":"continue pressed","data":{"how":"round arrows button found by image (spin.png) at (0.84, 0.62), score 0.97, scale 2.05"}}
+{"at":"2026-10-15T17:18:12.695Z","step":"game.enter","event":"pass","message":"playable in 19.7s · CREDIT 95.41 EUR [read: \"95,41 €. EA HAGAS PUESTA a A\"] · BET 0.20 EUR [read: \"0; 20 € ma A DE ——\"]","ms":19674}
+{"at":"2026-10-15T17:18:12.725Z","step":"game.closePanels","event":"start","message":"No game panel open over the reels (closed with its \"X\")"}
+{"at":"2026-10-15T17:18:16.282Z","step":"game.closePanels","event":"pass","message":"no panel open","ms":3557}
+{"at":"2026-10-15T17:18:16.292Z","step":"game.minBet","event":"start","message":"Wager lowered to the game minimum"}
+{"at":"2026-10-15T17:18:34.377Z","step":"game.minBet","event":"log","message":"\"−\" button not visible","data":{}}
+{"at":"2026-10-15T17:19:02.881Z","step":"game.minBet","event":"fail","message":"BET not visible → not visible (\"−\" not available: already at the minimum?) · reads NOT stable","ms":46588}
+{"at":"2026-10-15T17:19:03.893Z","step":"game.closePanels","event":"start","message":"No game panel open over the reels (closed with its \"X\")"}
+{"at":"2026-10-15T17:19:06.386Z","step":"game.closePanels","event":"pass","message":"no panel open","ms":2493}
+{"at":"2026-10-15T17:19:06.393Z","step":"betsson.readBalance","event":"start","message":"Betsson balance read in the market currency"}
+{"at":"2026-10-15T17:19:10.104Z","step":"betsson.readBalance","event":"log","message":"header balance","data":{"read":"95,41 €"}}
+{"at":"2026-10-15T17:19:10.105Z","step":"betsson.readBalance","event":"pass","message":"95.41 EUR [read: \"95,41 €\"]","data":{"balance":"95.41 EUR"},"ms":3712}
+{"at":"2026-10-15T17:19:10.111Z","step":"game.readHud","event":"start","message":"CREDIT and BET read (stable, market currency and language)"}
+{"at":"2026-10-15T17:19:36.212Z","step":"game.readHud","event":"log","message":"HUD read","data":{"text":"a '7 a 7 » - —>»\n- - - — tu YN Li\n—\n— ¡HAGA SU APUESTA!\nq) — | NN 0,20 €\nTIR. AUTO.","stable":false}}
+{"at":"2026-10-15T17:19:36.354Z","step":"game.readHud","event":"retry","message":"attempt 1 failed: CREDIT not visible · BET not visible · NOT stable · currency ≠ EUR · labels not in Spanish"}
+{"at":"2026-10-15T17:19:51.790Z","step":"game.readHud","event":"error","message":"locator.screenshot: Target page, context or browser has been closed"}
+{"at":"2026-10-15T17:19:51.790Z","step":"game.readHud","event":"retry","message":"attempt 2 failed: error: locator.screenshot: Target page, context or browser has been closed"}
+{"at":"2026-10-15T17:19:52.800Z","step":"game.readHud","event":"error","message":"locator.screenshot: Target page, context or browser has been closed"}
+{"at":"2026-10-15T17:19:52.800Z","step":"game.readHud","event":"fail","message":"error: locator.screenshot: Target page, context or browser has been closed","ms":42689}

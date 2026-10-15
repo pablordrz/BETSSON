@@ -4,7 +4,7 @@ import { moneyEq } from '../utils/money';
 import { sleep } from '../utils/text';
 import type { ScreenTarget } from './controls/screen-target';
 import { cropRel, type GameScreen } from './game-screen';
-import { readHud, type HudReading } from './hud';
+import { readHud, readWinAboveHud, type HudReading } from './hud';
 import { diffRatio } from './motion';
 import type { Ocr } from './ocr';
 
@@ -39,6 +39,12 @@ export async function waitForSpinSettled(
   opts: { calmThreshold: number; timeoutMs?: number; intervalMs?: number },
 ): Promise<SettleResult> {
   const start = Date.now();
+  // a win painted above the HUD band (e.g. over the spin button) is looked for once, on the settled frame
+  const withWin = async (r: HudReading): Promise<HudReading> => {
+    if (r.win?.value) return r;
+    const win = await readWinAboveHud(r.frame, ocr, market, layout);
+    return win ? { ...r, win, marks: [...r.marks, { box: win.box, label: `WIN: ${win.value!.amount.toFixed(2)} ${win.value!.currency ?? '?'}`, color: '#00e676' }] } : r;
+  };
   const timeoutMs = opts.timeoutMs ?? 60_000;
   const intervalMs = opts.intervalMs ?? 150;
   let prevReels: Buffer | undefined;
@@ -62,10 +68,10 @@ export async function waitForSpinSettled(
     if (calm >= 2 && sameCredit >= 1) {
       const button = await spinButton.locate(frame);
       detail = `reels calm (${(diff * 100).toFixed(1)}%), CREDIT ${credit?.toFixed(2)} stable, spin button ${button ? 'available' : 'not recognised'}`;
-      if (button || sameCredit >= 2) return { settled: true, elapsedMs: Date.now() - start, hud, detail };
+      if (button || sameCredit >= 2) return { settled: true, elapsedMs: Date.now() - start, hud: await withWin(hud), detail };
     } else if (sameCredit >= CELEBRATION_STABLE_READS && Date.now() - start >= MIN_SPIN_MS && (await spinButton.locate(frame))) {
       detail = `animation still playing (reels change ${(diff * 100).toFixed(1)}%), CREDIT ${credit?.toFixed(2)} stable for ${sameCredit + 1} reads, spin button available`;
-      return { settled: true, elapsedMs: Date.now() - start, hud, detail };
+      return { settled: true, elapsedMs: Date.now() - start, hud: await withWin(hud), detail };
     }
     await sleep(intervalMs);
   }

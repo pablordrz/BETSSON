@@ -31,6 +31,28 @@ export const goToGame = defineStep<void, ProviderEvidence>({
   },
 });
 
+/**
+ * A specific game, by its slug (as in /casino/tragaperras-slots/<slug>), regardless of GAME_SLUG: opens its page
+ * and enters Real Play like `site.goToGame`. Validates it is a Pragmatic Play game and the page is the one asked for.
+ */
+export const openGameBySlug = defineStep<{ slug: string }, ProviderEvidence>({
+  id: 'site.openGame',
+  title: 'Requested Pragmatic Play game page opened',
+  retryable: true,
+  async run({ site, market, log }, { slug }) {
+    await site.open(market.gamePathPrefix + slug);
+    const evidence = await site.goToGame(); // already on a game page: reads the game detail and presses "play for real"
+    log('game page', { asked: slug, slug: evidence.slug, detailId: evidence.gameDetailId });
+    const isPragmatic = /pragmatic/i.test(evidence.gameDetailId ?? '');
+    const isAsked = evidence.slug === slug;
+    return {
+      ok: isPragmatic && isAsked,
+      detail: `asked "${slug}" · opened "${evidence.slug ?? 'none'}" · detail id ${evidence.gameDetailId ?? 'not found'}${isAsked ? '' : ' · NOT the requested game (slug unknown on this market?)'}${isPragmatic ? '' : ' · not a Pragmatic Play game'}`,
+      data: evidence,
+    };
+  },
+});
+
 /** Regulated game session started (notice acknowledged, 5 h play time, lowest loss limit) — or not needed. */
 export const startGameSession = defineStep<void, { actions: string[] }>({
   id: 'site.gameSession',

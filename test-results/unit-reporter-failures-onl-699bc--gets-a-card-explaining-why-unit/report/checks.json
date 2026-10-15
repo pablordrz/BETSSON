@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-10-15T17:20:46.686Z",
+  "overall": "failed",
+  "totals": {
+    "PASS": 0,
+    "FAIL": 1,
+    "INFO": 0
+  },
+  "rows": [
+    {
+      "scenario": "Scenario 1",
+      "market": "betsson.es",
+      "id": "run",
+      "title": "El escenario llega hasta el final",
+      "status": "FAIL",
+      "expected": "sin errores de ejecución",
+      "actual": "TimeoutError: locator.click: Timeout 20000ms exceeded.",
+      "why": "«play-for-real» (data-test-id) no apareció en pantalla en 20 s",
+      "evidence": [],
+      "testId": "t1"
+    }
+  ]
+}

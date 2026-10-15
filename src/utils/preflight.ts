@@ -1,5 +1,5 @@
 import type { CurrencyCode } from '../config/markets';
-import { fmt, type Money } from './money';
+import { fmt, moneyEq, type Money } from './money';
 
 export interface SpinPreflightInput {
   /** In-game balance read on screen (stable across consecutive reads). */
@@ -33,6 +33,8 @@ export function spinPreflight({ credit, bet, betsson, currency }: SpinPreflightI
     if (m && m.currency !== currency) reasons.push(`${name} in ${m.currency ?? 'no currency'} instead of ${currency}`);
   }
   if (credit && bet && credit.amount < bet.amount) reasons.push(`CREDIT ${credit.amount.toFixed(2)} < BET ${bet.amount.toFixed(2)}`);
+  // before spinning the game shows the same wallet as Betsson: a different CREDIT means it was misread
+  if (credit && betsson && !moneyEq(credit.amount, betsson.amount)) reasons.push(`CREDIT ${credit.amount.toFixed(2)} ≠ Betsson balance ${betsson.amount.toFixed(2)} (misread?)`);
   if (betsson && bet && betsson.amount < bet.amount) reasons.push(`Betsson balance ${betsson.amount.toFixed(2)} < BET ${bet.amount.toFixed(2)}`);
   return {
     ok: reasons.length === 0,

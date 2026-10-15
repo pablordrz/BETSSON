@@ -23,6 +23,8 @@ export interface GameControls {
   betDown: ScreenTarget;
   /** The button that raises the wager one step ("+"). */
   betUp: ScreenTarget;
+  /** The "X" that closes the game's own panels (bet settings, info…). */
+  closeButton: ScreenTarget;
 }
 
 const TEMPLATES = path.resolve('assets', 'templates');
@@ -42,9 +44,21 @@ export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketCo
   const roundButton = new HoughCircleTarget('round spin button (Hough)');
   // Same two arrows in every game, the centre changes (empty, a logo, a gorilla with a crown…): one template per
   // look, the best match wins. Add a new look as assets/templates/pragmatic/spin-<name>.png.
-  const spinLooks = fs.readdirSync(path.join(TEMPLATES, 'pragmatic')).filter((f) => /^spin.*\.png$/.test(f)).map((f) => path.join(TEMPLATES, 'pragmatic', f));
+  const spinLooks = fs.readdirSync(path.join(TEMPLATES, 'pragmatic')).filter((f) => /^spin.*\.png$/.test(f));
+  // Looks whose inside shows the game's own artwork (Helios Triple Sun: arrows around a sun) are less distinctive
+  // than a plain disk, so they must match more strictly (measured: 0.71 on artwork with no button at the usual 0.70)
+  const ARTWORK_INSIDE = new Set(['spin-helios.png']);
+  const toPath = (f: string) => path.join(TEMPLATES, 'pragmatic', f);
   // first search seeded by Hough (where + size), confirmed by the templates (that it IS the Pragmatic icon)
-  const arrowsIcon = new TemplateTarget('round arrows button', spinLooks, { circular: true, seed: roundButton });
+  // minScale 0.7: real spin buttons match at 1.0–1.35 (fixed Brave window); a tiny template matches artwork (false click)
+  const plainLooks = new TemplateTarget('round arrows button', spinLooks.filter((f) => !ARTWORK_INSIDE.has(f)).map(toPath), { circular: true, seed: roundButton, minScale: 0.7 });
+  const artworkLooks = spinLooks.filter((f) => ARTWORK_INSIDE.has(f)).map(toPath);
+  const arrowsIcon: ScreenTarget = artworkLooks.length
+    ? new FirstVisibleTarget('round arrows button', [
+        plainLooks,
+        new TemplateTarget('round arrows button (artwork inside)', artworkLooks, { circular: true, seed: roundButton, minScale: 0.8, minScore: 0.82 }),
+      ])
+    : plainLooks;
   const continueText = allGameTexts.map((t) => t.continue.source).join('|');
   const spinButton = new FirstVisibleTarget('spin button', [arrowsIcon, roundButton]);
   // Pragmatic puts bet "−" / "+" just left / right of the spin button (≈4.5 % of the width): look for them THERE,
@@ -68,5 +82,7 @@ export function pragmaticControls(layout: GameLayout, ocr: Ocr, market: MarketCo
     ]),
     betDown: new TemplateTarget('bet minus button', path.join(TEMPLATES, 'pragmatic', 'bet-minus.png'), { circular: true, seed: leftOfSpin }),
     betUp: new TemplateTarget('bet plus button', path.join(TEMPLATES, 'pragmatic', 'bet-plus.png'), { circular: true, seed: rightOfSpin }),
+    // a thin white "X" on a dark panel (Helios Triple Sun's bet panel). Not circular: the X reaches the corners.
+    closeButton: new TemplateTarget('panel close button (X)', path.join(TEMPLATES, 'pragmatic', 'close-x.png'), { minScore: 0.8, minScale: 0.6, maxScale: 1.8 }),
   };
 }
