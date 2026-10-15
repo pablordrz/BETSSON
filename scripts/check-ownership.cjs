@@ -28,6 +28,7 @@ const OWNERS = {
   ],
   B: [
     'docs/vision-approaches.md',
+    'docs/vision-approaches/**',
     'src/vision/controls/**',
     'src/vision/template.ts',
     'assets/templates/**',
