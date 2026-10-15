@@ -2,7 +2,7 @@
 
 El checker «ve como un jugador»: nunca lee el DOM del juego (es un canvas en un iframe de Pragmatic Play), solo **píxeles**. Hay cuatro problemas de visión distintos, y para cada uno hemos elegido la técnica **midiéndola sobre fotogramas reales** del juego (Triple Hop Pots, betsson.es).
 
-Todos los números de este documento salen de:
+Todos los números de este documento salen de la última ejecución (los tiempos varían unos ms entre ejecuciones):
 
 ```bash
 node scripts/bench-vision.cjs        # offline, sin navegador ni dinero (≈ 1 min)
@@ -17,79 +17,46 @@ Lo que garantizan las mediciones lo comprueban tests automáticos en `npm run un
    - Para **leer números**, OCR.
    - Para **saber si algo se mueve**, diferencia de fotogramas.
 2. **Botón de tirar: combinar dos técnicas supera a cada una por separado.**
-   - La **plantilla** es la más fiable (9/9, error 0,08 radios), pero lenta la primera vez: 2,6 s.
-   - **Hough** es igual de fiable (9/9, 0 falsos positivos) y 50× más rápido (56 ms), pero no sabe si es *el* icono de Pragmatic.
-   - **Juntas** (Hough dice dónde y la plantilla confirma): **9/9, 0 falsos positivos y 0,3 s.**
+   - La **plantilla** es la más fiable (9/9, error 0,08 radios), pero lenta la primera vez: 2,7 s.
+   - **Hough** es igual de fiable (9/9, 0 falsos positivos) y 55× más rápido (48 ms), pero no sabe si es *el* icono de Pragmatic.
+   - **Juntas** (Hough dice dónde y la plantilla confirma): **9/9, 0 falsos positivos y 0,4 s.**
 3. **La segmentación no compensa aquí.** Es la más precisa cuando acierta (0,02 radios), pero solo acierta 3/9: el botón se funde con el dibujo oscuro que tiene detrás.
 4. **Lo que más importa no es acertar, sino no equivocarse.** Un falso positivo es un clic donde no hay botón. Todas las técnicas que usamos tienen **0 falsos positivos**, y además **el clic nunca es la prueba**: la pantalla tiene que mostrar que la tirada empezó.
-5. **Leer el saldo: el preprocesado importa más que el motor de OCR.** El mismo Tesseract pasa de **0/2 a 2/2 lecturas correctas** solo con quedarse con el texto brillante (umbral 210), y además es más rápido (hasta 3,7×: 854 → 231 ms).
+5. **Leer el saldo: el preprocesado importa más que el motor de OCR.** El mismo Tesseract pasa de **0/2 a 2/2 lecturas correctas** solo con quedarse con el texto brillante (umbral 210), y además es más rápido (hasta 3,9×: 848 → 215 ms).
 6. **Para el movimiento basta lo simple**: la diferencia de fotogramas separa «nada pasa» (≤ 0,02) de «algo cambió» (0,25) con un margen de más de 10×.
 7. **La IA entrenada (YOLO, modelos de visión-lenguaje) no hace falta para este alcance.** Para los botones de Pragmatic, la visión clásica ya da 9/9 sin entrenar nada y en milisegundos. Quedan como **ampliación** para juegos de otros proveedores: cada una entraría como un detector más en la cascada (`ScreenTarget`), sin tocar los escenarios.
 
-## Gráficas (datos medidos con `node scripts/bench-vision.cjs`)
+## Gráficas
 
-**Botón de tirar — fiabilidad frente a velocidad.** Arriba a la derecha es lo ideal. El eje horizontal va en escala logarítmica: de 2,6 s a 41 ms.
+Generadas con matplotlib a partir de los resultados medidos (`docs/vision-approaches/results.json`). Para regenerarlas: `node scripts/bench-vision.cjs`.
 
-```mermaid
-quadrantChart
-    title Botón de tirar: fiabilidad frente a velocidad
-    x-axis Lento --> Rápido
-    y-axis Poco fiable --> Fiable
-    quadrant-1 Lo ideal
-    quadrant-2 Fiable pero lento
-    quadrant-3 Descartar
-    quadrant-4 Rápido pero poco fiable
-    Plantilla ZNCC: [0.03, 0.97]
-    Plantilla guiada por Hough: [0.49, 0.94]
-    Hough: [0.86, 0.97]
-    Segmentación: [0.93, 0.33]
-```
+**Botón de tirar: fiabilidad frente a velocidad.** La zona verde es lo ideal: fiable y rápido.
 
-**Botón de tirar — aciertos** (de 9 casos con botón: 3 fotogramas reales × 3 tamaños). Ninguna técnica dio falsos positivos en los 3 casos sin botón.
+![Fiabilidad frente a velocidad](vision-approaches/01-fiabilidad-vs-velocidad.png)
 
-```mermaid
-xychart-beta
-    title "Aciertos encontrando el botón de tirar (de 9)"
-    x-axis ["Plantilla", "Plantilla + Hough", "Hough", "Segmentación"]
-    y-axis "Aciertos" 0 --> 9
-    bar [9, 9, 9, 3]
-```
+**Botón de tirar: resultado en cada caso.** Cada fila es una técnica y cada columna un fotograma (3 reales × 3 tamaños, y 3 sin botón). El número es el error en radios del botón.
 
-**Botón de tirar — tiempo de la primera búsqueda** (mediana, en ms; menos es mejor).
+![Mapa de casos](vision-approaches/04-mapa-de-casos.png)
 
-```mermaid
-xychart-beta
-    title "Tiempo de la primera búsqueda (ms, mediana)"
-    x-axis ["Plantilla", "Plantilla + Hough", "Hough", "Segmentación"]
-    y-axis "ms" 0 --> 2700
-    bar [2625, 311, 56, 41]
-```
+**Botón de tirar: aciertos y tiempo de la primera búsqueda**
 
-**Leer CRÉDITO y APUESTA — lecturas correctas** (de 2 franjas del HUD), según el preprocesado de la imagen.
+![Aciertos](vision-approaches/02-aciertos.png)
 
-```mermaid
-xychart-beta
-    title "Lecturas correctas del HUD (de 2)"
-    x-axis ["OCR normal", "Binarizado >= 180", "Binarizado >= 210"]
-    y-axis "Correctas" 0 --> 2
-    bar [0, 1, 2]
-```
+![Tiempo](vision-approaches/03-tiempo.png)
 
-**Movimiento — fracción de píxeles que cambian.** El umbral para decir «se mueve» queda entre el ruido y el cambio real.
+**Leer CRÉDITO y APUESTA: el preprocesado decide.** Solo el binarizado ≥ 210 lee bien las dos franjas, y es el más rápido.
 
-```mermaid
-xychart-beta
-    title "Diferencia entre fotogramas (fracción de píxeles)"
-    x-axis ["Mismo fotograma", "Ruido de compresión", "Temblor 1-2 px", "Cambio real"]
-    y-axis "Cambio" 0 --> 0.3
-    bar [0, 0, 0.021, 0.249]
-```
+![OCR del HUD](vision-approaches/05-ocr-hud.png)
+
+**Saber si los rodillos se mueven.** El margen entre el ruido y un cambio real deja sitio de sobra para el umbral.
+
+![Movimiento](vision-approaches/06-movimiento.png)
 
 ## Resumen
 
 | Problema | Técnica elegida | Por qué (dato medido) |
 |---|---|---|
-| **Encontrar el botón de tirar** | Cascada: **plantilla ZNCC guiada por Hough → Hough de círculos** → tecla ESPACIO → posición calibrada | Plantilla: 9/9, error 0,08 radios. Hough: 9/9, **0 falsos positivos, 56 ms** y sin plantilla. Juntas: 9/9 y la primera búsqueda pasa de 2,6 s a **0,3 s** |
+| **Encontrar el botón de tirar** | Cascada: **plantilla ZNCC guiada por Hough → Hough de círculos** → tecla ESPACIO → posición calibrada | Plantilla: 9/9, error 0,08 radios. Hough: 9/9, **0 falsos positivos, 56 ms** y sin plantilla. Juntas: 9/9 y la primera búsqueda pasa de 2,7 s a **0,4 s** |
 | **Leer CRÉDITO / APUESTA** | **OCR (Tesseract) con binarización del texto brillante (≥ 210)** | La única variante correcta en las dos franjas del HUD; el OCR normal falla en ambas |
 | **Saber si los rodillos se mueven** | **Diferencia de fotogramas** con umbral sobre el ruido en reposo | Reposo y temblor ≤ 0,02 frente a 0,25 en un cambio real: margen de 10× |
 | **Mensaje de saldo insuficiente** | OCR + expresiones regulares por intención y por idioma | Pendiente de fotogramas reales (ver «Siguientes pasos») |
@@ -121,10 +88,10 @@ xychart-beta
 
 | Técnica | Aciertos | Falsos positivos | Error medio | Mediana | Máximo | Necesita |
 |---|---|---|---|---|---|---|
-| **Plantilla ZNCC** (`template.ts`, `TemplateTarget`) | **9/9** | **0/3** | 0,08 radios | 2 862 ms¹ | 7 105 ms¹ | el icono recortado (`assets/templates/pragmatic/spin.png`) |
-| **Plantilla guiada por Hough** (la que usamos) | **9/9** | **0/3** | 0,08 radios | **311 ms**² | 849 ms² | el icono + Hough |
-| **Hough de círculos** (`hough-target.ts`) | **9/9** | **0/3** | 0,10 radios | **56 ms** | 69 ms | nada: cualquier botón redondo grande con icono |
-| **Segmentación** (`segmentation-target.ts`) | 3/9 | **0/3** | **0,02 radios** | 41 ms | 66 ms | nada |
+| **Plantilla ZNCC** (`template.ts`, `TemplateTarget`) | **9/9** | **0/3** | 0,08 radios | 2 663 ms¹ | 5 491 ms¹ | el icono recortado (`assets/templates/pragmatic/spin.png`) |
+| **Plantilla guiada por Hough** (la que usamos) | **9/9** | **0/3** | 0,08 radios | **399 ms**² | 796 ms² | el icono + Hough |
+| **Hough de círculos** (`hough-target.ts`) | **9/9** | **0/3** | 0,10 radios | **48 ms** | 69 ms | nada: cualquier botón redondo grande con icono |
+| **Segmentación** (`segmentation-target.ts`) | 3/9 | **0/3** | **0,02 radios** | 46 ms | 72 ms | nada |
 
 ² Solo en los casos con botón. Cuando no hay botón, Hough no da pista y la plantilla hace su búsqueda completa (1,7–6,5 s). Lo dejamos así a propósito: si Hough fallase en otro juego, la plantilla todavía lo encuentra sola.
 
@@ -168,7 +135,7 @@ Así llegamos al 9/9 sin falsos positivos, en tres iteraciones que dejamos docum
 spin: plantilla ZNCC (guiada por Hough)  →  Hough de círculos  →  ESPACIO  →  posición calibrada
 ```
 
-**Plantilla guiada por Hough** (`TemplateTarget` con la opción `seed`): en la primera búsqueda, Hough dice **dónde** hay un botón redondo y **qué tamaño** tiene, en ~50 ms. Después la plantilla solo confirma que **es** el icono de Pragmatic, en esa zona y a unos pocos tamaños alrededor del que dio Hough. Se queda la fiabilidad de la plantilla (9/9, error 0,08) y la primera búsqueda pasa de **2,6 s a 0,3 s de mediana**. Si la plantilla no confirma, hace su búsqueda completa como antes.
+**Plantilla guiada por Hough** (`TemplateTarget` con la opción `seed`): en la primera búsqueda, Hough dice **dónde** hay un botón redondo y **qué tamaño** tiene, en ~50 ms. Después la plantilla solo confirma que **es** el icono de Pragmatic, en esa zona y a unos pocos tamaños alrededor del que dio Hough. Se queda la fiabilidad de la plantilla (9/9, error 0,08) y la primera búsqueda pasa de **2,7 s a 0,4 s de mediana**. Si la plantilla no confirma, hace su búsqueda completa como antes.
 
 - La **plantilla va primero**: es la prueba más fuerte de que es *el* botón de Pragmatic, y tras la primera búsqueda vuelve a comprobarlo en milisegundos.
 - **Hough va segundo**: cubre los juegos o estados donde el icono cambia (otros diseños, el botón en estado «parar»…) con el mismo acierto y sin plantilla.
@@ -186,12 +153,12 @@ Verdad: **CRÉDITO 99,90 € · APUESTA 2,00 €** (`pragmatic-triple-hop-pots.p
 
 | Franja del HUD | Preprocesado | CRÉDITO | APUESTA | ¿Correcto? | ms |
 |---|---|---|---|---|---|
-| 20 % inferior | normal (contraste + invertir) | — | — | **no** | 854 |
-| 20 % inferior | binarizado ≥ 180 | 99,9 | 2 | sí | 338 |
-| 20 % inferior | **binarizado ≥ 210** | 99,9 | 2 | **sí** | 231 |
-| 10 % inferior | normal | 99,9 | 0 | **no** | 240 |
-| 10 % inferior | binarizado ≥ 180 | 99 | 2 | **no** | 215 |
-| 10 % inferior | **binarizado ≥ 210** | 99,9 | 2 | **sí** | 129 |
+| 20 % inferior | normal (contraste + invertir) | — | — | **no** | 848 |
+| 20 % inferior | binarizado ≥ 180 | 99,9 | 2 | sí | 342 |
+| 20 % inferior | **binarizado ≥ 210** | 99,9 | 2 | **sí** | 215 |
+| 10 % inferior | normal | 99,9 | 0 | **no** | 259 |
+| 10 % inferior | binarizado ≥ 180 | 99 | 2 | **no** | 231 |
+| 10 % inferior | **binarizado ≥ 210** | 99,9 | 2 | **sí** | 130 |
 
 **Por qué:** el texto del HUD de Pragmatic (etiquetas amarillas, importes blancos) es **más brillante que cualquier fondo del juego**. Quedarse solo con los píxeles ≥ 210 deja el texto negro sobre blanco y borra el decorado. El OCR normal confunde el decorado con letras.
 

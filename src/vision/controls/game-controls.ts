@@ -30,7 +30,7 @@ const TEMPLATES = path.resolve('assets', 'templates');
  *
  * Cascade for the spin button (benchmark on real frames: docs/vision-approaches.md):
  *   1. template ZNCC — the exact Pragmatic icon; most precise. First search seeded by Hough (where + size:
- *      2.6 s → 0.3 s median), then ms-fast re-checks where it was
+ *      2.7 s → 0.4 s median), then ms-fast re-checks where it was
  *   2. circle Hough  — any big round button with an icon, no template; same hit rate, ~50× faster on a first search
  *   3. SPACE key     — players' shortcut
  *   4. calibrated position — last resort; the screen still has to confirm the spin started

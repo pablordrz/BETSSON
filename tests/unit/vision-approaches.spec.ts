@@ -20,6 +20,15 @@ import { diffRatio } from '../../src/vision/motion';
 import { Ocr } from '../../src/vision/ocr';
 
 const FIX = path.resolve('tests/unit/fixtures');
+/** Benchmark results (source of the charts: scripts/bench-vision-charts.py). */
+const RESULTS = path.resolve('docs/vision-approaches/results.json');
+function saveResults(key: string, value: unknown) {
+  fs.mkdirSync(path.dirname(RESULTS), { recursive: true });
+  const all = fs.existsSync(RESULTS) ? JSON.parse(fs.readFileSync(RESULTS, 'utf8')) : {};
+  all[key] = value;
+  all.generatedAt = new Date().toISOString();
+  fs.writeFileSync(RESULTS, JSON.stringify(all, null, 2));
+}
 const TEMPLATE = path.resolve('assets/templates/pragmatic/spin.png');
 
 interface Case {
@@ -160,6 +169,7 @@ test.describe('vision approaches — spin button on real frames', () => {
   test('BENCH: comparison table (BENCH=1)', async () => {
     test.skip(!process.env.BENCH, 'run with BENCH=1 (node scripts/bench-vision.cjs)');
     const rows = await results();
+    saveResults('spinButton', { cases: rows, positives: CASES.filter((c) => c.truth).length, negatives: CASES.filter((c) => !c.truth).length });
     console.log('\n=== Spin button: per case ===');
     console.table(rows.map((r) => ({ technique: r.technique, case: r.case, verdict: r.verdict, 'dist (radii)': r.dist?.toFixed(2) ?? '', ms: r.ms })));
     console.log('\n=== Spin button: summary ===');
@@ -205,6 +215,7 @@ test.describe('vision approaches — HUD reading (OCR) on a real frame', () => {
           rows.push({ region: label, mode, CREDIT: credit ?? '-', BET: bet ?? '-', correct: credit === 99.9 && bet === 2 ? 'YES' : 'no', ms });
         }
       }
+      saveResults('hudOcr', rows);
       console.log('\n=== HUD OCR (truth: CRÉDITO 99,90 € · APUESTA 2,00 €) ===');
       console.table(rows);
     } finally {
@@ -220,12 +231,14 @@ test.describe('vision approaches — motion (frame difference)', () => {
     const intro = fs.readFileSync(path.join(FIX, 'vision/intro-triple-hop-pots.png'));
     const recompressed = await sharp(playable).jpeg({ quality: 55 }).png().toBuffer(); // compression noise ≈ idle shimmer
     const shifted = await sharp(playable).extract({ left: 2, top: 1, width: 1208, height: 680 }).resize(1212, 683).png().toBuffer(); // 1–2 px jitter
+    const motion = [
+      { pair: 'same frame', diff: await diffRatio(playable, playable) },
+      { pair: 'recompressed (noise)', diff: await diffRatio(playable, recompressed) },
+      { pair: '1–2 px jitter', diff: await diffRatio(playable, shifted) },
+      { pair: 'intro → playable (real change)', diff: await diffRatio(intro, playable) },
+    ];
+    saveResults('motion', motion);
     console.log('\n=== Frame difference (fraction of pixels changed) ===');
-    console.table([
-      { pair: 'same frame', diff: (await diffRatio(playable, playable)).toFixed(3) },
-      { pair: 'recompressed (noise)', diff: (await diffRatio(playable, recompressed)).toFixed(3) },
-      { pair: '1–2 px jitter', diff: (await diffRatio(playable, shifted)).toFixed(3) },
-      { pair: 'intro → playable (real change)', diff: (await diffRatio(intro, playable)).toFixed(3) },
-    ]);
+    console.table(motion.map((m) => ({ pair: m.pair, diff: m.diff.toFixed(3) })));
   });
 });
