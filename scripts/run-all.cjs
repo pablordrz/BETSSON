@@ -5,8 +5,12 @@
  *      so it never reuses the first account's session (skipped when EMPTY_USER/PASS are not set)
  *   3. Spin series in a FRESH Brave: SPINS real spins (default 5) at the minimum wager, never above MAX_BET
  *      (default 0.10), then the balance on the page must equal the last in-game CREDIT
- *   4. one merged report: site/index.html (checks) + site/playwright/index.html (traces, screenshots)
- * Needs .env with FUNDED_USER/PASS (EMPTY_USER/PASS for scenario 2) and CDP_URL. ⚠ Real money: 1 + SPINS spins.
+ *   4. REPORT DEMO in a FRESH Brave: a test that FAILS ON PURPOSE (one real spin, then the CREDIT read is altered by
+ *      −1 €) to show what a failure looks like in the report. Its failure is EXPECTED: shown as such in the summary
+ *      and NOT counted in the exit code (--no-report-demo to skip it)
+ *   5. one merged report: site/index.html (checks) + site/playwright/index.html (traces, screenshots)
+ * Needs .env with FUNDED_USER/PASS (EMPTY_USER/PASS for scenario 2) and CDP_URL.
+ * ⚠ Real money: 1 + SPINS (+1 for the report demo) spins at the minimum wager.
  * Offline checks (typecheck, unit tests) are separate: npm run typecheck · npm run unit.
  */
 const { spawnSync } = require('node:child_process');
@@ -14,20 +18,23 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const withSpins = !process.argv.includes('--no-spins');
+const withReportDemo = !process.argv.includes('--no-report-demo');
 const blobDir = path.resolve('all-blob-reports');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const node = process.execPath;
 const results = [];
 
-const run = (title, cmd, args, env = {}) => {
+/** `expectFailure`: the step is SUPPOSED to fail (report demo): ok when it fails, and labelled as such. */
+const run = (title, cmd, args, env = {}, { expectFailure = false } = {}) => {
   const start = Date.now();
   console.log(`\n━━━ ${title} ━━━`);
   // Only npx.cmd needs a shell on Windows; node is run directly (its path, "C:\Program Files\...", has a space
   // that cmd.exe would split on)
   const shell = process.platform === 'win32' && cmd === npx;
   const r = spawnSync(cmd, args, { stdio: 'inherit', env: { ...process.env, ...env }, shell });
-  const ok = r.status === 0;
-  results.push({ title, ok, seconds: Math.round((Date.now() - start) / 1000) });
+  const ok = expectFailure ? r.status !== 0 : r.status === 0;
+  const note = expectFailure ? (ok ? ' — fallo provocado, ESPERADO' : ' — debería haber fallado y NO falló') : '';
+  results.push({ title: `${title}${note}`, ok, seconds: Math.round((Date.now() - start) / 1000) });
   return ok;
 };
 
@@ -65,6 +72,17 @@ const scenario = (title, spec, blobName) =>
       SPINS: process.env.SPINS ?? '5',
       MAX_BET: process.env.MAX_BET ?? '0.10',
     });
+  }
+
+  if (withReportDemo) {
+    await freshBrave();
+    run(
+      'Report demo — test that fails ON PURPOSE (CREDIT read altered by −1 €)',
+      npx,
+      ['playwright', 'test', '--project=report-demo-betsson.es', '--reporter=list,blob'],
+      { PLAYWRIGHT_BLOB_OUTPUT_DIR: blobDir, PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-demo.zip' },
+      { expectFailure: true },
+    );
   }
 
   run('Merged report', npx, ['playwright', 'merge-reports', '--config', 'merge.config.ts', blobDir]);

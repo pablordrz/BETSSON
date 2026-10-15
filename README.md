@@ -59,6 +59,36 @@ in that window, then run the tests: the checker attaches to that tab instead of 
 - `npm run login` saves the browser's session to `.auth/` (gitignored) for runs without CDP.
 - Optional `EXTRA_HTTP_HEADERS` (JSON, from the mentors) is added only to requests to the Betsson domain.
 
+## Run everything in one go: `npm run all`
+
+Each part runs in its **own fresh Brave** (empty profile), so no account reuses another one's session. At the end,
+one merged report: **`site/index.html`** (pass/fail per check) + `site/playwright/index.html` (traces, screenshots).
+
+| # | Part | Account | Real money | Expected result |
+|---|---|---|---|---|
+| 1 | **Scenario 1** — completed Real Play spin | `FUNDED_USER` | 1 spin, minimum wager | ✓ pass |
+| 2 | **Scenario 2** — insufficient balance | `EMPTY_USER` | none (0 €) | ✓ pass (skipped without `EMPTY_USER/PASS`) |
+| 3 | **Spin series** — `SPINS` spins (default 5), never above `MAX_BET` (default 0.10) | `FUNDED_USER` | 5 spins | ✓ pass |
+| 4 | **Report demo** — a test that **fails on purpose** | `FUNDED_USER` | 1 spin | ✗ **fails by design** |
+
+**The report demo (4) fails on purpose** to show what a failure looks like in the report. The journey is real (login,
+game, one spin), then the CREDIT read after the spin is **altered by −1 €**. A row **"FALLO PROVOCADO A PROPÓSITO"**
+declares it in the report. With that "misread", two checks fail as they would with a real OCR error:
+
+- `money.game`: in-game balance rule `after = before − wager + payout` (expected 105.72 €, "read" 104.72 €)
+- `site.exitBalance`: in-game CREDIT vs **Betsson's balance on the page (DOM)** (104.72 € vs 105.72 €)
+
+Each failure card shows expected vs observed, the step's log lines and the real screenshot (where the true CREDIT is
+visible). In the `npm run all` summary it appears as **"fallo provocado, ESPERADO"** and it does **not** count in the
+exit code: `npm run all` is green when 1–3 pass and the demo fails as designed.
+
+```bash
+npm run all                          # 1 + 2 + 3 + 4 (≈ 7 spins at the minimum wager)
+npm run all -- --no-report-demo      # only the real journeys (1–3)
+npm run all -- --no-spins            # without the spin series
+npm run report:demo                  # only the report demo (needs a Brave open: npm run browser:fresh)
+```
+
 ## Atomic steps (how the team works on it)
 
 Every journey is a **plain sequence of atomic steps** (`src/steps/`). A step **detects** where it is, **acts** like a
