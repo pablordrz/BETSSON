@@ -34,6 +34,24 @@ npm run unit              # offline tests of the pure parsing / vision helpers
 Reports: `reports/index.html` (pass/fail per check and scenario) and `reports/playwright/` (screenshots with OCR regions
 drawn, trace and video per test).
 
+## Player mode (recommended): run inside a browser you opened
+
+Betsson's fraud detection rejects logins from Playwright-launched browsers ("Actualiza la página y vuelve a intentarlo
+en breve"). The checker therefore attaches to a normal browser the player opened, over CDP:
+
+```bash
+npm run browser   # opens Brave (or Chrome) with its own profile in .cache/ and DevTools on 127.0.0.1:9222
+                  # set CDP_URL=http://127.0.0.1:9222 in .env
+# in that window, BY HAND: log in, open a Pragmatic Play game, accept the game-session dialogs and enter Real Play
+npm run calibrate # NO spin: attaches to the open game tab and dumps what the checker sees
+npm test          # scenarios run on the open game tab
+```
+
+- The login and the Spanish **game-session / responsible-gambling dialogs are always done by the player**, never automated.
+- If no game tab is open, the checker stops and asks for it instead of navigating.
+- `npm run login` saves the session of that browser to `.auth/` (gitignored) for runs without CDP.
+- Optional `EXTRA_HTTP_HEADERS` (JSON, from the mentors) is added only to requests to the Betsson domain.
+
 ## Calibration (first thing once you have the accounts)
 
 `npm run calibrate` writes to `calibration/es/` (gitignored):

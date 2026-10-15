@@ -34,6 +34,8 @@ export interface MarketConfig {
     emailInput: string;
     passwordInput: string;
     loginSubmit: string;
+    /** Error banner of the login form. */
+    loginError: string;
     gameThumbnail: string;
     gameTitleLink: string;
     showMore: string;
@@ -78,6 +80,7 @@ export const markets: Record<MarketId, MarketConfig> = {
       emailInput: 'email-input',
       passwordInput: 'password-input',
       loginSubmit: 'account-login-btn-1',
+      loginError: 'account-fabric-login-error',
       gameThumbnail: 'game-thumbnail',
       gameTitleLink: 'game-thumbnail-title',
       showMore: 'show-more.button',
@@ -85,8 +88,8 @@ export const markets: Record<MarketId, MarketConfig> = {
       gameDetailPrefix: 'game-detail-',
     },
     selectors: {
-      headerBalance:
-        '[data-test-id*="balance" i], [data-testid*="balance" i], [class*="balance" i]', // CALIBRATE
+      // Calibrated 2026-10-15 (logged in): header "Saldo" button, e.g. "99,90 €"
+      headerBalance: '[data-test-id="balance-button"]',
       mask: ['[data-test-id*="username" i]', '[data-test-id*="user-name" i]', '[class*="username" i]', '[class*="user-name" i]'],
     },
     ui: {

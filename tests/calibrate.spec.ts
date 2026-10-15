@@ -9,6 +9,7 @@ import path from 'node:path';
 import { annotate } from '../src/vision/annotate';
 import { cropRel, imageSize } from '../src/vision/game-screen';
 import { readHud } from '../src/vision/hud';
+import { BetssonSite } from '../src/pages/betsson-site';
 import { test } from './fixtures';
 
 test.use({ account: 'funded' });
@@ -23,10 +24,12 @@ test('Calibrate — what the checker sees', async ({ page, site, ocr, market, la
   };
 
   // Betsson header: which DOM elements contain a balance? (for selectors.headerBalance)
-  await site.open(market.providerPath);
-  await page.waitForTimeout(5000);
+  // If the player already has the game open in this tab (CDP mode), use another tab: never navigate it away.
+  const lobby = site.openGameSlug() ? await page.context().newPage() : page;
+  await new BetssonSite(lobby, market).open(market.providerPath);
+  await lobby.waitForTimeout(5000);
   // Betsson.es uses Shadow DOM → walk every shadow root
-  const candidates = await page.evaluate(() => {
+  const candidates = await lobby.evaluate(() => {
     const re = /(€|EUR)\s?\d|\d[\d.,]*\s?(€|EUR)/;
     const walk = (root: Document | ShadowRoot, out: HTMLElement[] = []): HTMLElement[] => {
       for (const el of root.querySelectorAll<HTMLElement>('*')) {
@@ -52,8 +55,12 @@ test('Calibrate — what the checker sees', async ({ page, site, ocr, market, la
       });
   });
   await save('betsson-balance-candidates.json', JSON.stringify(candidates, null, 2), 'application/json');
+  if (lobby !== page) {
+    await lobby.close();
+    await page.bringToFront();
+  }
 
-  const { game, provider } = await site.launchGame(layout);
+  const { game, provider } = await site.openGame(layout);
   await save('provider.json', JSON.stringify(provider, null, 2), 'application/json');
   await save('frames.json', JSON.stringify(page.frames().map((f) => f.url()), null, 2), 'application/json');
 

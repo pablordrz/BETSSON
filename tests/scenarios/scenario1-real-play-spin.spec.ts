@@ -13,7 +13,7 @@ test('Scenario 1 — completed Real Play spin', async ({ site, wallet, ocr, mark
   const cur = market.currency;
 
   // 1–3. Pragmatic Play provider page (already authenticated) → launch the game in Real Play
-  const { game, provider } = await test.step(`Launch "${market.gameSlug}" from the Pragmatic Play page in Real Play`, () => site.launchGame(layout));
+  const { game, provider } = await test.step(`Open "${site.openGameSlug() ?? market.gameSlug}" in Real Play (Pragmatic Play)`, () => site.openGame(layout));
   await checks.check('game.provider', 'Game is a Pragmatic Play game listed on the provider page', provider.listedOnProviderPage && /pragmatic/i.test(provider.gameDetailId ?? ''), `listed on ${market.providerPath}, game detail id "pragmaticPlay…"`, `listed: ${provider.listedOnProviderPage ? `yes ("${provider.tileTitle}")` : 'no'} · detail id: ${provider.gameDetailId ?? 'not found'}`);
   const hudBefore = await test.step('Wait until the game is playable (HUD readable)', () => waitForPlayableHud(game, ocr, market, layout));
 

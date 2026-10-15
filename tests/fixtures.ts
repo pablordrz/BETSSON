@@ -1,5 +1,7 @@
 import { test as base } from '@playwright/test';
-import { loginToStorageState, type StorageState } from '../src/auth/login';
+import { contextOptionsFor, loginToStorageState, type StorageState } from '../src/auth/login';
+import { cdpUrl, savedSession } from '../src/auth/session';
+import { applyTrustedTraffic } from '../src/auth/trusted-traffic';
 import { credentialsFor, type AccountKind } from '../src/config/env';
 import { pragmaticLayout, type GameLayout } from '../src/config/game-layout';
 import { getMarket, type MarketConfig, type MarketId } from '../src/config/markets';
@@ -34,6 +36,20 @@ interface TestFixtures extends TestOptions {
 }
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
+  // CDP_URL set → run inside a browser the player opened themselves (npm run browser), instead of launching one.
+  // Betsson's fraud detection rejects logins from Playwright-launched browsers.
+  browser: [
+    async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
+      const cdp = cdpUrl();
+      const browser = cdp
+        ? await playwright.chromium.connectOverCDP(cdp)
+        : await playwright[browserName].launch({ ...launchOptions, headless, channel });
+      await use(browser);
+      await browser.close(); // over CDP this only disconnects: the player's browser stays open
+    },
+    { scope: 'worker' },
+  ],
+
   marketId: ['es', { scope: 'worker', option: true }],
   market: [async ({ marketId }, use) => use(getMarket(marketId)), { scope: 'worker' }],
   layout: [async ({}, use) => use(pragmaticLayout), { scope: 'worker' }],
@@ -50,7 +66,16 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   auth: [
     async ({ browser, market }, use) => {
       const out = {} as Record<AccountKind, AuthResult>;
+      // CDP mode: the player logged in by hand in their own browser — never submit the login form.
+      if (cdpUrl()) return use({ funded: {}, empty: {} });
       for (const kind of ['funded', 'empty'] as AccountKind[]) {
+        // 1) session saved by a manual login (npm run login) — no automated form submission at all
+        const saved = savedSession(market.id, kind);
+        if (saved) {
+          out[kind] = { state: saved };
+          continue;
+        }
+        // 2) automated login with credentials from the environment
         const creds = credentialsFor(market.id, kind);
         if (!creds) {
           out[kind] = { error: `no credentials for the ${kind} account (see .env.example)` };
@@ -59,7 +84,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         try {
           out[kind] = { state: await loginToStorageState(browser, market, creds) };
         } catch (e) {
-          out[kind] = { error: `login failed: ${(e as Error).message.split('\n')[0]}` };
+          // first line + the locator Playwright was waiting for (never contains the password)
+          const lines = (e as Error).message.split('\n');
+          const waiting = lines.find((l) => /waiting for/.test(l))?.trim();
+          out[kind] = { error: `login failed: ${lines[0]}${waiting ? ` (${waiting})` : ''}` };
         }
       }
       await use(out);
@@ -69,12 +97,44 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   account: ['funded', { option: true }],
 
-  // Every test context starts already authenticated as `account`.
-  storageState: async ({ auth, account, market }, use, testInfo) => {
+  context: async ({ browser, market, auth, account }, use, testInfo) => {
+    if (cdpUrl()) {
+      // The player's own browser profile: already logged in, game session started by the player.
+      const context = browser.contexts()[0];
+      const traced = await context.tracing.start({ screenshots: true, snapshots: true }).then(
+        () => true,
+        () => false, // already traced by Playwright
+      );
+      await use(context);
+      if (traced) {
+        const file = testInfo.outputPath('trace.zip');
+        await context.tracing.stop({ path: file });
+        await testInfo.attach('trace', { path: file, contentType: 'application/zip' });
+      }
+      return; // never close the player's profile
+    }
     const a = auth[account];
     if (a.error?.startsWith('no credentials')) testInfo.skip(true, `${market.site}: ${a.error}`);
     if (!a.state) throw new Error(`${market.site} ${account} account: ${a.error}`);
-    await use(a.state);
+    const context = await browser.newContext({
+      ...contextOptionsFor(market),
+      storageState: a.state,
+      recordVideo: { dir: testInfo.outputPath('videos'), size: { width: 1600, height: 900 } },
+    });
+    await applyTrustedTraffic(context, market);
+    await use(context);
+    const videos = context.pages().map((p) => p.video()).filter((v) => !!v);
+    await context.close();
+    for (const [i, v] of videos.entries()) await testInfo.attach(`video-${i}`, { path: await v.path(), contentType: 'video/webm' });
+  },
+
+  // CDP mode: the tab where the player opened the game; otherwise a new tab.
+  page: async ({ context, market }, use) => {
+    const open = cdpUrl() ? context.pages().find((p) => new URL(p.url()).pathname.startsWith(market.gamePathPrefix)) : undefined;
+    const page = open ?? (await context.newPage());
+    if (open) await open.bringToFront();
+    await use(page);
+    if (!open) await page.close().catch(() => undefined);
   },
 
   site: async ({ page, market }, use, testInfo) => {
