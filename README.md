@@ -72,10 +72,22 @@ one merged report: **`site/index.html`** (pass/fail per check) + `site/playwrigh
 |---|---|---|---|---|
 | 1 | **Scenario 1** — completed Real Play spin | `FUNDED_USER` | 1 spin, minimum wager | ✓ pass |
 | 2 | **Scenario 2** — insufficient balance | `EMPTY_USER` | none (0 €) | ✓ pass (skipped without `EMPTY_USER/PASS`) |
-| 3 | **Spin series** — `SPINS` spins (default 5), never above `MAX_BET` (default 0.10) | `FUNDED_USER` | 5 spins | ✓ pass |
-| 4 | **Report demo** — a test that **fails on purpose** | `FUNDED_USER` | 1 spin | ✗ **fails by design** |
+| 3 | **Spin series** — **5 spins** in `npm run all` (`SPINS`, default 5 here; 10 when run alone with `npm run spins`), never above `MAX_BET` (0.10 €) | `FUNDED_USER` | 5 spins | ✓ pass |
+| 4 | **Raise the wager with "+"** — from the minimum, "+" once (`BET_STEPS`, default 1, cap `BET_MAX` 0.50 €), one spin at the raised wager | `FUNDED_USER` | 1 spin (≈ 0.20 €) | ✓ pass |
+| 5 | **Report demo** — a test that **fails on purpose** | `FUNDED_USER` | 1 spin | ✗ **fails by design** |
 
-**The report demo (4) fails on purpose** to show what a failure looks like in the report. The journey is real (login,
+**Raise the wager (4)** — `tests/bet/raise-bet.spec.ts`, also alone with `npm run bet:raise`. It proves the player can
+change the wager and that the checker still validates everything from the screen:
+
+1. lowers the wager to the minimum (`game.minBet`) and reads it (e.g. 0,10 €);
+2. presses **"+"** — found **by image next to the spin button** — **one step at a time**, reading BET after each press
+   (`game.raiseBet`): it must go up (0,10 → 0,20 €) and **never above the cap**; a press over the cap is undone with "−";
+3. CREDIT must not change while the wager changes (a press on the wrong control could start a spin);
+4. spins **once** at the raised wager and checks that **the raised wager is the one charged** (`money.wagerUsed`) and that
+   the in-game and Betsson balances reconcile (`money.game`, `money.betsson`): e.g. 104,60 − 0,20 = 104,40 €;
+5. puts the wager back to the minimum for the next run.
+
+**The report demo (5) fails on purpose** to show what a failure looks like in the report. The journey is real (login,
 game, one spin), then the CREDIT read after the spin is **altered by −1 €**. A row **"FALLO PROVOCADO A PROPÓSITO"**
 declares it in the report. With that "misread", two checks fail as they would with a real OCR error:
 
@@ -84,12 +96,14 @@ declares it in the report. With that "misread", two checks fail as they would wi
 
 Each failure card shows expected vs observed, the step's log lines and the real screenshot (where the true CREDIT is
 visible). In the `npm run all` summary it appears as **"fallo provocado, ESPERADO"** and it does **not** count in the
-exit code: `npm run all` is green when 1–3 pass and the demo fails as designed.
+exit code: `npm run all` is green when 1–4 pass and the demo fails as designed.
 
 ```bash
-npm run all                          # 1 + 2 + 3 + 4 (≈ 7 spins at the minimum wager)
-npm run all -- --no-report-demo      # only the real journeys (1–3)
+npm run all                          # 1 + 2 + 3 + 4 + 5 (8 real spins: 7 at the minimum wager, 1 at the raised one)
+npm run all -- --no-report-demo      # only the real journeys (1–4)
 npm run all -- --no-spins            # without the spin series
+npm run all -- --no-bet-raise        # without the "+" test
+npm run bet:raise                    # only the "+" test (needs a Brave open: npm run browser:fresh)
 npm run report:demo                  # only the report demo (needs a Brave open: npm run browser:fresh)
 ```
 
