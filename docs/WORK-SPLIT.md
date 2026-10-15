@@ -4,7 +4,8 @@ Este documento sirve para dos cosas:
 - Que **cada asistente de IA** (uno por compañero) pueda trabajar solo, sin pisar a los demás.
 - Que el merge en `main` sea limpio.
 
-Cada persona copia en su asistente **la sección «Contexto común»** y **su sección (A, B, C o D)**.
+**Para cada IA:** pásale `docs/ai-briefs/_COMMON.md` y su brief (`A-narrativa.md`, `B-vision.md`, `C-reports.md` o `D-demo.md`).
+**Fuente de verdad de la propiedad de archivos:** `scripts/check-ownership.cjs`. Antes de cada PR, cada persona ejecuta `node scripts/check-ownership.cjs <A|B|C|D>`, que falla si ha tocado algo que no es suyo.
 
 | Persona | Bloque | Tareas de la lista | Rama |
 |---|---|---|---|
@@ -48,7 +49,7 @@ npm run demo              # tiradas rápidas (⚠ dinero real)
 6. Antes de abrir el PR: `npx tsc --noEmit` sin errores y `npm run unit` en verde.
 7. Commits pequeños, en tu rama. PR contra `main`. Al final del mensaje de commit: `Co-Authored-By: <tu asistente>`.
 
-**Orden de merge**: **C → B → D → A**.
+**Orden de merge**: **dependencias de D (si las hay) → C → B → D → A**.
 - C toca la infraestructura (runner e informe), así que va primero.
 - B y D no se solapan con nadie.
 - A va al final para describir lo que realmente ha quedado.
@@ -233,7 +234,10 @@ Deben ser claros, con ejemplos **del código real** (rutas y fragmentos cortos),
 | `docs/why-typescript.md`, `docs/code-philosophy.md`, `docs/qa-approach.md`, `docs/presentation-outline.md`, `README.md` | A |
 | `docs/vision-approaches.md`, `src/vision/controls/**`, `src/vision/template.ts`, `assets/templates/**`, `scripts/bench-vision.*`, `tests/unit/vision-approaches.spec.ts` | B |
 | `src/steps/runner.ts`, `src/utils/checks.ts`, `src/reporter/**`, `merge.config.ts`, `playwright.config.ts`, `tests/fixtures.ts`, `tests/unit/steps.spec.ts`, `tests/unit/reporter.spec.ts`, `tests/unit/isolation.spec.ts`, `docs/reports-and-logs.md`, `docs/test-isolation.md` | C |
-| `tests/demo/**`, `scripts/open-browser.cjs`, `scripts/demo*`, `package.json` (scripts), `src/vision/{settle,motion,bet,hud,ocr,game-screen}.ts`, `src/pages/**`, `.env.example`, `docs/demo-runbook.md` | D |
-| `src/steps/step.ts`, `src/steps/*.steps.ts`, `src/steps/index.ts`, `tests/scenarios/**`, `src/config/**`, `src/auth/**` | **Congelados**: cambios solo de común acuerdo, en un PR aparte |
+| `tests/demo/**`, `scripts/open-browser.cjs`, `scripts/demo*`, `package.json`, `package-lock.json`, `src/vision/{settle,motion,bet,hud,ocr,game-screen}.ts`, `src/pages/**`, `.env.example`, `docs/demo-runbook.md` | D |
+| `.gitignore`, `ci/**`, `.github/**` | C |
+| `src/steps/step.ts`, `src/steps/*.steps.ts`, `src/steps/index.ts`, `tests/scenarios/**`, `src/config/**`, `src/auth/**`, `tsconfig.json`, `scripts/check-ownership.cjs` | **Congelados**: cambios solo de común acuerdo, en un PR aparte |
+
+**Dependencias nuevas:** solo las añade **D** (`package.json` y `package-lock.json`), en un PR pequeño que se mergea **antes** que el de quien las pidió. Así el lockfile nunca entra en conflicto.
 
 Si un cambio necesita tocar una ruta congelada o de otra persona, se abre un **PR pequeño aparte** con el dueño como revisor. Nunca se mezcla en tu PR.
