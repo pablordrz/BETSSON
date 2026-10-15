@@ -105,6 +105,18 @@ export async function readHud(
   return { ...parsed, frame: full, ocr: result, marks };
 }
 
+/** Time the intro gets to show a HUD or a recognisable continue/spin button before the checker presses SPACE. */
+export const INTRO_SPIN_KEY_AFTER_MS = 5000;
+
+/**
+ * Press the spin key (SPACE) ONCE when, after INTRO_SPIN_KEY_AFTER_MS, the intro still shows no HUD label at all
+ * and the continue/spin button was not recognised by image: on Pragmatic the intro continues with the spin
+ * control. Never with a HUD label on screen, so it can never be a spin.
+ */
+export function shouldPressSpinOnIntro(alreadyTapped: boolean, hud: Pick<HudReading, 'credit' | 'bet' | 'win'>, startedAt: number, now = Date.now()): boolean {
+  return !alreadyTapped && !(hud.credit || hud.bet || hud.win) && now - startedAt >= INTRO_SPIN_KEY_AFTER_MS;
+}
+
 /**
  * Gets the game from "loading / splash" to "playable": waits for CREDIT and BET to be readable,
  * pressing the visible CONTINUE button if the intro screen shows one.
@@ -120,6 +132,7 @@ export async function waitForPlayableHud(
   const start = Date.now();
   let last: HudReading | undefined;
   let pressedContinue = false;
+  let spinKeyPressed = false;
   while (Date.now() - start < timeoutMs) {
     const frame = await game.capture();
     last = await readHud(game, ocr, market, layout, frame);
@@ -131,6 +144,10 @@ export async function waitForPlayableHud(
       if (cont) {
         await game.clickRel(cont.x, cont.y);
         pressedContinue = true;
+      } else if (shouldPressSpinOnIntro(spinKeyPressed, last, start)) {
+        // spin/continue button not recognised: press the spin key once, like a player on the keyboard
+        await game.press('Space');
+        spinKeyPressed = true;
       }
     }
     await sleep(700);

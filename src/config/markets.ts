@@ -63,7 +63,9 @@ export interface MarketConfig {
       limits: RegExp;
       /** Button that starts the game session (in the notice, the limits dialog and the game placeholder). */
       start: RegExp;
-      /** A play-time option (the shortest one is chosen). */
+      /** Play-time option to choose (5 hours). */
+      sessionTime: RegExp;
+      /** Any play-time option (fallback when the preferred one is not offered: the first one is chosen). */
       timeOption: RegExp;
       /** A loss-limit option (the lowest one is chosen). */
       lossOption: RegExp;
@@ -112,6 +114,7 @@ export const markets: Record<MarketId, MarketConfig> = {
         notice: /finalizaste tu sesi[oó]n|juego (m[aá]s )?seguro|juegas de forma segura/i,
         limits: /tiempo de juego|l[ií]mite de (p[eé]rdidas|tiempo)|l[ií]mites? de (la )?sesi[oó]n/i,
         start: /^(iniciar( una nueva)? sesi[oó]n|empezar a jugar|continuar|jugar)$/i,
+        sessionTime: /^5\s*(h|horas?)$/i,
         timeOption: /^\d+\s*(min|minutos?|horas?)$/i,
         lossOption: /^\d+\s*%/,
       },

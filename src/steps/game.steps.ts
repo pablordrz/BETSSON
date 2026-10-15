@@ -4,7 +4,7 @@ import { normalize, pct, sleep } from '../utils/text';
 import { annotate } from '../vision/annotate';
 import { pressRepeatedly } from '../vision/bet';
 import type { GameScreen } from '../vision/game-screen';
-import { findMessage, readHud, readHudStable, type HudReading } from '../vision/hud';
+import { findMessage, readHud, readHudStable, shouldPressSpinOnIntro, type HudReading } from '../vision/hud';
 import { measureIdleNoise, waitForMotion } from '../vision/motion';
 import { waitForSpinSettled } from '../vision/settle';
 import { triggerSpin, type SpinAttempt } from '../vision/spin';
@@ -23,6 +23,7 @@ export const enterGame = defineStep<{ game: GameScreen; timeoutMs?: number }, { 
   async run({ ocr, market, layout, controls, log }, { game, timeoutMs = 90_000 }) {
     const start = Date.now();
     let pressed = false;
+    let spinKeyPressed = false;
     let hud = await readHud(game, ocr, market, layout);
     log(hud.credit?.value && hud.bet?.value ? 'already playable' : 'intro/loading screen (HUD not readable)', { hud: hud.ocr.text.slice(0, 80) });
     while (!(hud.credit?.value && hud.bet?.value) && Date.now() - start < timeoutMs) {
@@ -33,6 +34,11 @@ export const enterGame = defineStep<{ game: GameScreen; timeoutMs?: number }, { 
           await game.clickRel(cont.x, cont.y);
           pressed = true;
           log('continue pressed', { how: cont.detail });
+        } else if (shouldPressSpinOnIntro(spinKeyPressed, hud, start)) {
+          // spin/continue button not recognised by image: press the spin key once, like a player on the keyboard
+          await game.press('Space');
+          spinKeyPressed = true;
+          log('spin button not recognised on the intro: SPACE (spin key) pressed');
         }
       }
       await sleep(700);
@@ -133,11 +139,11 @@ export const waitSpinEnd = defineStep<{ game: GameScreen; noise: number }, { cre
   async run({ ocr, market, layout, controls, log }, { game, noise }) {
     const s = await waitForSpinSettled(game, ocr, market, layout, controls.spinButton, { calmThreshold: Math.max(0.01, noise * 1.5) });
     const credit = s.hud.credit?.value;
-    log(s.settled ? 'settled' : 'not settled', { seconds: Number((s.elapsedMs / 1000).toFixed(1)), signals: s.detail, credit: credit?.amount, win: s.hud.win?.value?.amount ?? 0 });
+    log(s.settled ? 'settled' : 'not settled', { seconds: Number((s.elapsedMs / 1000).toFixed(1)), signals: s.detail, credit: credit?.amount });
     const ok = s.settled && !!credit;
     return {
       ok,
-      detail: `${s.settled ? `settled in ${(s.elapsedMs / 1000).toFixed(1)}s` : 'NOT settled'} · ${s.detail} · WIN ${fmt(s.hud.win?.value ?? null)}`,
+      detail: `${s.settled ? `settled in ${(s.elapsedMs / 1000).toFixed(1)}s` : 'NOT settled'} · ${s.detail} · CREDIT ${fmt(credit ?? null)}`,
       data: credit ? { credit, win: s.hud.win?.value ?? null, hud: s.hud } : undefined,
       evidence: [{ name: 'after spin', png: await annotate(s.hud.frame, s.hud.marks, 'game.spinEnd') }],
     };

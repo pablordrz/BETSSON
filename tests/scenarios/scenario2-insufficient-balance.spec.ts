@@ -30,6 +30,11 @@ test('Scenario 2 — insufficient balance', async ({ steps }) => {
   // 4. Balances before the attempt
   const betssonBefore = (await steps.must(readBetssonBalance)).data.balance;
   const before = (await steps.must(readGameHud, { game })).data;
+  // In Brave (CDP) the logged-in account is whatever the browser has: with money, pressing spin is a real wager.
+  test.skip(
+    before.credit.amount >= before.bet.amount,
+    `Account has balance (CREDIT ${before.credit.amount.toFixed(2)} ≥ BET ${before.bet.amount.toFixed(2)}): scenario 2 needs an account without money — not spinning`,
+  );
 
   // 5–6. Attempt a spin: rejected, with a visible message in the expected language
   const { noise } = (await steps.must(measureIdle, { game })).data;

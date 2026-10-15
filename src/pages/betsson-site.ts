@@ -229,14 +229,17 @@ export class BetssonSite {
       ]);
       if (!seen) break; // nothing regulatory on screen: the game is starting
       if (seen === 'limits') {
-        const time = limits.getByRole('button', { name: ui.timeOption }).first();
+        // preferred play time (5 h); the first option only if that one is not offered
+        const preferred = limits.getByRole('button', { name: ui.sessionTime }).first();
+        const hasPreferred = await visible(preferred, 2000);
+        const time = hasPreferred ? preferred : limits.getByRole('button', { name: ui.timeOption }).first();
         const loss = limits.getByRole('button', { name: ui.lossOption }).first();
         const timeText = (await time.innerText().catch(() => '')).trim();
         const lossText = (await loss.innerText().catch(() => '')).trim();
         await time.click().catch(() => undefined);
         await loss.click().catch(() => undefined);
         await limits.getByRole('button', { name: ui.start }).last().click();
-        steps.push(`game-session limits: play time "${timeText || '?'}", loss limit "${lossText || '?'}"`);
+        steps.push(`game-session limits: play time "${timeText || '?'}"${hasPreferred ? '' : ' (5 h not offered)'}, loss limit "${lossText || '?'}"`);
         await limits.waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => undefined);
         break; // the session is started
       }

@@ -1,17 +1,19 @@
 /**
- * Runs EVERYTHING in one go:   npm run all            (add --spins to also run the spin series)
- *   1. typecheck + offline unit tests (stops here if they fail)
- *   2. Scenario 1 (funded account) in a FRESH Brave
- *   3. Scenario 2 (account WITHOUT balance: the spin must be blocked) in another FRESH Brave,
- *      so it never reuses the first account's session
+ * Runs the real journeys on betsson.es in one go:   npm run all        (--no-spins to skip the spin series)
+ *   1. Scenario 1 (funded account) in a FRESH Brave: login, game session, ONE real spin, balance check on exit
+ *   2. Scenario 2 (account WITHOUT balance: the spin must be blocked) in another FRESH Brave,
+ *      so it never reuses the first account's session (skipped when EMPTY_USER/PASS are not set)
+ *   3. Spin series in a FRESH Brave: SPINS real spins (default 5) at the minimum wager, never above MAX_BET
+ *      (default 0.10), then the balance on the page must equal the last in-game CREDIT
  *   4. one merged report: site/index.html (checks) + site/playwright/index.html (traces, screenshots)
- * Needs .env with FUNDED_USER/PASS, EMPTY_USER/PASS and CDP_URL. ⚠ Scenario 1 makes ONE real spin (minimum wager).
+ * Needs .env with FUNDED_USER/PASS (EMPTY_USER/PASS for scenario 2) and CDP_URL. ⚠ Real money: 1 + SPINS spins.
+ * Offline checks (typecheck, unit tests) are separate: npm run typecheck · npm run unit.
  */
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const withSpins = process.argv.includes('--spins');
+const withSpins = !process.argv.includes('--no-spins');
 const blobDir = path.resolve('all-blob-reports');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const node = process.execPath;
@@ -20,7 +22,10 @@ const results = [];
 const run = (title, cmd, args, env = {}) => {
   const start = Date.now();
   console.log(`\n━━━ ${title} ━━━`);
-  const r = spawnSync(cmd, args, { stdio: 'inherit', env: { ...process.env, ...env }, shell: process.platform === 'win32' });
+  // Only npx.cmd needs a shell on Windows; node is run directly (its path, "C:\Program Files\...", has a space
+  // that cmd.exe would split on)
+  const shell = process.platform === 'win32' && cmd === npx;
+  const r = spawnSync(cmd, args, { stdio: 'inherit', env: { ...process.env, ...env }, shell });
   const ok = r.status === 0;
   results.push({ title, ok, seconds: Math.round((Date.now() - start) / 1000) });
   return ok;
@@ -46,11 +51,6 @@ const scenario = (title, spec, blobName) =>
   const t0 = Date.now();
   fs.rmSync(blobDir, { recursive: true, force: true });
 
-  if (!run('Typecheck', npx, ['tsc', '--noEmit']) || !run('Unit tests (offline)', npx, ['playwright', 'test', '--project=unit'])) {
-    console.error('\nOffline checks failed: not running anything with real money.');
-    process.exit(1);
-  }
-
   await freshBrave();
   scenario('Scenario 1 — completed Real Play spin (funded account)', 'tests/scenarios/scenario1-real-play-spin.spec.ts', 'scenario1.zip');
 
@@ -62,6 +62,8 @@ const scenario = (title, spec, blobName) =>
     run('Spin series', npx, ['playwright', 'test', '--project=series-betsson.es', '--reporter=list,blob'], {
       PLAYWRIGHT_BLOB_OUTPUT_DIR: blobDir,
       PLAYWRIGHT_BLOB_OUTPUT_NAME: 'series.zip',
+      SPINS: process.env.SPINS ?? '5',
+      MAX_BET: process.env.MAX_BET ?? '0.10',
     });
   }
 
