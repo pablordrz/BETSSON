@@ -124,9 +124,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       );
       await use(context);
       if (traced) {
+        // same policy as playwright.config.ts: keep the trace only when the test failed (or EVIDENCE=all)
+        const keep = testInfo.status !== testInfo.expectedStatus || process.env.EVIDENCE === 'all';
         const file = testInfo.outputPath('trace.zip');
-        await context.tracing.stop({ path: file });
-        await testInfo.attach('trace', { path: file, contentType: 'application/zip' });
+        await context.tracing.stop(keep ? { path: file } : {});
+        if (keep) await testInfo.attach('trace', { path: file, contentType: 'application/zip' });
       }
       return; // never close the player's profile
     }
@@ -142,7 +144,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(context);
     const videos = context.pages().map((p) => p.video()).filter((v) => !!v);
     await context.close();
-    for (const [i, v] of videos.entries()) await testInfo.attach(`video-${i}`, { path: await v.path(), contentType: 'video/webm' });
+    const keepVideo = testInfo.status !== testInfo.expectedStatus || process.env.EVIDENCE === 'all';
+    for (const [i, v] of videos.entries()) {
+      if (keepVideo) await testInfo.attach(`video-${i}`, { path: await v.path(), contentType: 'video/webm' });
+      else await v.delete().catch(() => undefined);
+    }
   },
 
   // CDP mode: the tab where the player opened the game; otherwise a new tab.
@@ -161,7 +167,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   site: async ({ page, market }, use, testInfo) => {
     const site = new BetssonSite(page, market);
     await use(site);
-    // final state of the page, with personal data masked
+    // final state of the page, with personal data masked — only when the test failed (or EVIDENCE=all)
+    if (testInfo.status === testInfo.expectedStatus && process.env.EVIDENCE !== 'all') return;
     const shot = await site.maskedScreenshot().catch(() => undefined);
     if (shot) await testInfo.attach('final-page (masked)', { body: shot, contentType: 'image/png' });
   },

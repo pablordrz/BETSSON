@@ -1,7 +1,12 @@
 import { test, type TestInfo } from '@playwright/test';
+import { BLANK_PAGE_WHY, explain } from '../reporter/explain';
+import { evaluateRequirements, requirementSetsFor, type RequirementSet } from '../reporter/step-requirements';
 import type { Checks } from '../utils/checks';
 import { sleep } from '../utils/text';
+import { isBlank } from '../vision/game-screen';
 import type { Step, StepContext, StepOutcome } from './step';
+
+const ICONS = { start: '▶', log: '·', pass: '✓', fail: '✗', error: '!', retry: '↻' } as const;
 
 export interface StepLogEntry {
   at: string;
@@ -31,7 +36,12 @@ export class StepRunner {
     private readonly services: Omit<StepContext, 'log'>,
     private readonly checks: Checks,
     private readonly testInfo: TestInfo,
-    private readonly opts: { retries?: number; quiet?: boolean } = {},
+    private readonly opts: {
+      retries?: number;
+      quiet?: boolean;
+      /** Requirement sets per step id (tests inject their own; default: the src/reporter/requirements folder). */
+      requirements?: (stepId: string) => RequirementSet[];
+    } = {},
   ) {}
 
   /** Runs a step; the journey continues even if it fails (soft). Steps without input take no argument. */
@@ -48,16 +58,21 @@ export class StepRunner {
 
   private async execute<I, O>(step: Step<I, O>, input: I): Promise<StepResult<O>> {
     const ctx: StepContext = { ...this.services, log: (message, data) => this.emit(step.id, 'log', message, data) };
+    const firstEntry = this.entries.length;
     this.emit(step.id, 'start', step.title, summarize(input));
     const attempts = step.retryable ? 1 + (this.opts.retries ?? 2) : 1;
     const start = Date.now();
     let outcome: StepOutcome<O> = { ok: false, detail: 'not run' };
+    let error: string | undefined;
     for (let attempt = 1; attempt <= attempts; attempt++) {
+      error = undefined;
       try {
         outcome = await step.run(ctx, input);
       } catch (e) {
         const message = (e as Error).message.split('\n')[0];
         this.emit(step.id, 'error', message);
+        // keep the full text (Playwright's call log says WHAT it was waiting for) for the report's "why"
+        error = (e as Error).message;
         outcome = { ok: false, detail: `error: ${message}` };
       }
       if (outcome.ok || attempt === attempts) break;
@@ -65,18 +80,66 @@ export class StepRunner {
       await sleep(500 * attempt); // adaptive pause before retrying a read/navigation
     }
     const ms = Date.now() - start;
-    const evidence: string[] = [];
-    for (const ev of outcome.evidence ?? []) evidence.push(await this.checks.image(`${step.id} · ${ev.name}`, ev.png));
     this.emit(step.id, outcome.ok ? 'pass' : 'fail', outcome.detail, summarize(outcome.data), ms);
-    await this.checks.check(`step.${step.id}`, step.title, outcome.ok, 'validated on screen', `${outcome.detail} (${(ms / 1000).toFixed(1)}s)`, { evidence });
+    await this.report(step, input, outcome, ms, error, firstEntry);
     return { ...outcome, ms };
+  }
+
+  /**
+   * One report row per requirement (src/reporter/requirements). Screenshots, why and log lines only for the
+   * failing ones (EVIDENCE=all also attaches them on success); passing rows are just counted in the report.
+   */
+  private async report<I, O>(step: Step<I, O>, input: I, outcome: StepOutcome<O>, ms: number, error: string | undefined, firstEntry: number) {
+    const run = { step: { id: step.id, title: step.title }, input, outcome, error, ms, market: this.services.market };
+    let results = evaluateRequirements(run, this.opts.requirements ? this.opts.requirements(step.id) : requirementSetsFor(step.id));
+    // safety net: a step is never left without a row (e.g. the requirements folder could not be loaded)
+    if (!results.length) results = [{ what: step.title, status: outcome.ok ? 'pass' : 'fail', expected: step.title, observed: outcome.detail }];
+    const failed = results.filter((r) => r.status === 'fail');
+    const skipped = results.filter((r) => r.status === 'skipped');
+
+    let evidence: string[] = [];
+    let blank = false;
+    if (failed.length || process.env.EVIDENCE === 'all') {
+      for (const ev of outcome.evidence ?? []) evidence.push(await this.checks.image(`${step.id} · ${ev.name}`, ev.png));
+      if (failed.length && !evidence.length) {
+        // the step brought no screenshot: take the page as the player sees it (personal data masked)
+        const shot = await this.services.site?.maskedScreenshot().catch(() => undefined);
+        if (shot) {
+          evidence.push(await this.checks.image(`${step.id} · pantalla`, shot));
+          blank = !!(await isBlank(shot).catch(() => undefined))?.blank;
+        }
+      }
+    }
+    // a thrown error explains itself best from its full text (Playwright's call log says what it waited for)
+    const whyOf = (observed: string) => (blank ? BLANK_PAGE_WHY : error ? explain(error) : (explain(observed) ?? explain(outcome.detail)));
+    const log = failed.length ? this.tail(step.id, firstEntry) : undefined;
+    const note = skipped.length ? `${skipped.length} requisito(s) no evaluado(s): ${skipped[0].reason}` : undefined;
+
+    for (const [i, r] of results.entries()) {
+      if (r.status === 'skipped') continue;
+      const fail = r.status === 'fail';
+      await this.checks.check(`${step.id}#${i + 1}`, r.what, !fail, r.expected, fail ? r.observed : `${r.observed} (${(ms / 1000).toFixed(1)}s)`, {
+        step: step.id,
+        ...(fail ? { evidence, why: whyOf(r.observed), log, note } : {}),
+      });
+      if (fail) evidence = []; // the screenshots go on the first failing card only
+    }
+  }
+
+  /** Last log lines of a step's execution, formatted like the console. */
+  private tail(stepId: string, from: number, lines = 6): string[] {
+    return this.entries
+      .slice(from)
+      .filter((e) => e.step === stepId && ['log', 'error', 'retry'].includes(e.event))
+      .slice(-lines)
+      .map((e) => `${e.at.slice(11, 19)} ${ICONS[e.event]} ${e.message}${e.data && Object.keys(e.data).length ? ` ${JSON.stringify(e.data)}` : ''}`);
   }
 
   private emit(step: string, event: StepLogEntry['event'], message: string, data?: Record<string, unknown>, ms?: number) {
     const entry: StepLogEntry = { at: new Date().toISOString(), step, event, message, data, ms };
     this.entries.push(entry);
     if (this.opts.quiet) return;
-    const icon = { start: '▶', log: '·', pass: '✓', fail: '✗', error: '!', retry: '↻' }[event];
+    const icon = ICONS[event];
     const time = entry.at.slice(11, 19);
     const extra = data && Object.keys(data).length ? ` ${JSON.stringify(data)}` : '';
     console.log(`${time} ${icon} [${step}] ${message}${ms !== undefined ? ` (${(ms / 1000).toFixed(1)}s)` : ''}${extra}`);
