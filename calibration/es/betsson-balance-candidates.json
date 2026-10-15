@@ -1,0 +1,20 @@
+[
+  {
+    "tag": "div",
+    "testId": null,
+    "closestTestId": null,
+    "shadowHost": "site-header_fabric-brand-secondary-panel[data-test-id=null]",
+    "classes": "balance-wrapper",
+    "text": "105,10 €",
+    "top": 9
+  },
+  {
+    "tag": "span",
+    "testId": null,
+    "closestTestId": "balance-button",
+    "shadowHost": "site-header_fabric-brand-secondary-panel[data-test-id=null]",
+    "classes": "",
+    "text": "105,10 €",
+    "top": 17
+  }
+]

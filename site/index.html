@@ -1,0 +1,36 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Informe de validación</title><style>
+:root{--bg:#fff;--fg:#1b1f24;--mut:#667;--line:#e3e6ea;--card:#fafbfc;--pass:#0a7d32;--fail:#c62828;--info:#1565c0}
+@media (prefers-color-scheme:dark){:root{--bg:#111418;--fg:#e8eaed;--mut:#9aa;--line:#2a2f36;--card:#171b21}}
+body{font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--fg);margin:0 auto;padding:24px 16px;max-width:1100px}
+h1{margin:0 0 4px}small,.mut{color:var(--mut);font-weight:400}h2{font-size:17px;margin:28px 0 10px}
+.verdict{font-size:28px;font-weight:800;margin:16px 0}.good{color:var(--pass)}.bad{color:var(--fail)}
+.card{border:1px solid var(--line);border-left:4px solid var(--fail);border-radius:8px;background:var(--card);padding:12px 14px;margin:0 0 14px}
+.card header{margin-bottom:8px}code{font-size:12px;color:var(--mut)}
+dl{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;margin:0}dt{color:var(--mut);font-size:12px;text-transform:uppercase;padding-top:2px}dd{margin:0;overflow-wrap:anywhere}
+dd.why{font-weight:600}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;margin:6px 0}
+summary{cursor:pointer;color:var(--mut);font-size:12px;margin-top:8px}
+img{display:block;max-width:100%;max-height:420px;border:1px solid var(--line);border-radius:6px;margin-top:10px}
+.b{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;color:#fff}.FAIL{background:var(--fail)}
+.more{display:inline-block;margin-top:8px;font-size:13px}a{color:var(--info)}
+.ok{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);color:var(--pass);font-weight:600}
+@media(max-width:600px){dl{grid-template-columns:1fr}dt{padding-top:6px}}
+</style></head><body>
+<h1>Intelligent Game Validation</h1>
+<div class="mut">Betsson · Pragmatic Play Real Play · 2026-10-15T15:38:38.515Z · <a href="playwright/index.html">informe completo de Playwright</a></div>
+<div class="verdict bad">✗ 2 fallos</div>
+<section><h2>betsson.es · DEMO informe — fallo provocado: el CRÉDITO leído tras la tirada tiene 1 € de menos <small>2 fallo(s)</small></h2><article class="card">
+      <header><span class="b FAIL">FALLO</span> <b>Valida en pantalla lo que promete</b> <code>money.game</code></header>
+      <dl><dt>Esperado</dt><dd class="">In-game balance: after = before − wager + payout</dd><dt>Observado</dt><dd class="">105.20 − 0.10 + 0.00 = 105.10 EUR · read 104.10 EUR [read: &quot;105,10 € (−1 € inyectado)&quot;] · observed payout -1.00</dd></dl>
+      <details open><summary>Log del paso</summary><pre>15:37:44 · MISMATCH {&quot;before&quot;:105.2,&quot;bet&quot;:0.1,&quot;payout&quot;:0,&quot;after&quot;:104.1,&quot;observedPayout&quot;:-1}</pre></details>
+      <a href="evidence/1-money.game_pantalla.png" target="_blank"><img src="evidence/1-money.game_pantalla.png" alt="Valida en pantalla lo que promete" loading="lazy"></a>
+      <a class="more" href="playwright/index.html#?testId=07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71">traza y detalles →</a>
+    </article><article class="card">
+      <header><span class="b FAIL">FALLO</span> <b>Valida en pantalla lo que promete</b> <code>site.exitBalance</code></header>
+      <dl><dt>Esperado</dt><dd class="">After leaving the game, Betsson balance (page) = last in-game CREDIT</dd><dt>Observado</dt><dd class="">in-game CREDIT 104.10 EUR [read: &quot;105,10 € (−1 € inyectado)&quot;] · Betsson page 105.10 EUR [read: &quot;105,10 €&quot;] (16 reads) · MISMATCH</dd></dl>
+      <details open><summary>Log del paso</summary><pre>15:38:19 · header balance after leaving the game {&quot;read&quot;:&quot;105,10 €&quot;,&quot;credit&quot;:104.1,&quot;reads&quot;:16}</pre></details>
+      <a href="evidence/2-site.exitBalance_Betsson_balance.png" target="_blank"><img src="evidence/2-site.exitBalance_Betsson_balance.png" alt="Valida en pantalla lo que promete" loading="lazy"></a>
+      <a class="more" href="playwright/index.html#?testId=07fa4fd5c6855fdf0491-1728205fdc3e6ad7ee71">traza y detalles →</a>
+    </article></section>
+<p class="ok">✓ 46 comprobaciones correctas <span class="mut">· 1 informativa(s) en checks.json</span></p>
+</body></html>

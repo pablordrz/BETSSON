@@ -1,17 +1,15 @@
 /**
  * Manual login — the player logs in by hand ONCE, the session is saved and the scenarios reuse it.
- *   npm run browser               opens Brave/Chrome with its own profile and DevTools port (keep it open)
+ *   npm run browser               opens Brave with its own profile and DevTools port (keep it open)
  *   npm run login                 (funded account)
  *   ACCOUNT=empty npm run login   (insufficient-balance account)
- * With CDP_URL set (recommended) it attaches to that browser; otherwise it launches Google Chrome.
+ * Brave only: it attaches to that Brave window (CDP_URL) and checks it is Brave.
  * Nothing is typed by the automation and nothing is traced or recorded.
  * The session goes to .auth/<market>-<account>.json (gitignored, never published).
  */
 import fs from 'node:fs';
 import { chromium, selectors, test } from '@playwright/test';
-import { contextOptionsFor } from '../src/auth/login';
-import { cdpUrl, storageStatePath } from '../src/auth/session';
-import { applyTrustedTraffic } from '../src/auth/trusted-traffic';
+import { connectBrave, storageStatePath } from '../src/auth/session';
 import type { AccountKind } from '../src/config/env';
 import { getMarket, type MarketId } from '../src/config/markets';
 import { BetssonSite } from '../src/pages/betsson-site';
@@ -22,14 +20,10 @@ test('Manual login — save the session', async () => {
   test.setTimeout(16 * 60_000);
   selectors.setTestIdAttribute('data-test-id');
   const account = (process.env.ACCOUNT ?? 'funded') as AccountKind;
-  const cdp = cdpUrl();
-  const browser = cdp
-    ? await chromium.connectOverCDP(cdp)
-    : await chromium.launch({ headless: false, channel: process.env.PW_CHANNEL || 'chrome' });
+  // Brave only: the player's own Brave window (npm run browser), its own profile
+  const browser = await connectBrave(chromium);
   try {
-    // Over CDP: the browser's own profile (what the player sees); otherwise a fresh context.
-    const context = cdp ? browser.contexts()[0] : await browser.newContext(contextOptionsFor(market));
-    if (!cdp) await applyTrustedTraffic(context, market);
+    const context = browser.contexts()[0];
     const page = await context.newPage();
     const site = new BetssonSite(page, market);
     await site.open(market.loginPath);
@@ -40,7 +34,7 @@ test('Manual login — save the session', async () => {
     fs.mkdirSync('.auth', { recursive: true });
     fs.writeFileSync(file, JSON.stringify(await context.storageState(), null, 2));
     console.log(`>>> Session saved to ${file}`);
-    if (cdp) await page.close();
+    await page.close();
   } finally {
     await browser.close(); // over CDP this only disconnects
   }

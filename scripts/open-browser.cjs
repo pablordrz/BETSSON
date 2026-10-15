@@ -1,8 +1,10 @@
 /**
- * Opens a normal Brave (or Chrome) window with a dedicated profile and a local DevTools port, so the checker
- * can attach to it (CDP_URL) instead of launching an automated browser — Betsson's fraud detection rejects those.
- *   npm run browser                      (Brave if installed, else Chrome)
- *   BROWSER_PATH="C:\...\chrome.exe" npm run browser
+ * Opens a normal BRAVE window with a dedicated profile and a local DevTools port, so the checker can attach to it
+ * (CDP_URL) instead of launching an automated browser — Betsson's fraud detection rejects those.
+ * This project runs ONLY on Brave (no Chrome fallback).
+ *   npm run browser                      (keeps the profile)
+ *   npm run browser:fresh                (empty profile: the checker does the whole journey)
+ *   BRAVE_PATH="D:\...\brave.exe" npm run browser   (Brave installed in a non-standard folder)
  * The profile lives in .cache/browser-profile (gitignored). Keep the window open while the tests run.
  */
 const { spawn } = require('node:child_process');
@@ -10,19 +12,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const port = Number(new URL(process.env.CDP_URL || 'http://127.0.0.1:9222').port || 9222);
+const custom = process.env.BRAVE_PATH?.trim();
+if (custom && !/brave/i.test(path.basename(custom))) {
+  console.error(`BRAVE_PATH must point to the Brave executable (got "${custom}"). This project runs only on Brave.`);
+  process.exit(1);
+}
 const candidates = [
-  process.env.BROWSER_PATH,
+  custom,
   'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+  'C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
   path.join(process.env.LOCALAPPDATA || '', 'BraveSoftware\\Brave-Browser\\Application\\brave.exe'),
   '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
   '/usr/bin/brave-browser',
-  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/usr/bin/google-chrome',
+  '/usr/bin/brave',
+  '/snap/bin/brave',
 ].filter(Boolean);
 const exe = candidates.find((p) => fs.existsSync(p));
 if (!exe) {
-  console.error('No Brave/Chrome found: set BROWSER_PATH');
+  console.error('Brave not found. This project runs only on Brave: install it from https://brave.com, or set BRAVE_PATH to brave.exe.');
   process.exit(1);
 }
 /** Closes a test browser still listening on the DevTools port (otherwise "fresh" would reuse it). */

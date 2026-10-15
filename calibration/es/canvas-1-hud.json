@@ -1,0 +1,34 @@
+{
+  "credit": {
+    "value": {
+      "amount": 105.1,
+      "currency": "EUR",
+      "raw": "105,10 €"
+    },
+    "expectedLanguage": true,
+    "labelText": "CREDITO",
+    "box": {
+      "x": 620.6666666666666,
+      "y": 816.6666666666666,
+      "w": 143.0000000000001,
+      "h": 20.33333333333337
+    }
+  },
+  "bet": {
+    "value": {
+      "amount": 0.1,
+      "currency": "EUR",
+      "raw": "0,10 €"
+    },
+    "expectedLanguage": true,
+    "labelText": "APUESTA",
+    "box": {
+      "x": 776.6666666666666,
+      "y": 811,
+      "w": 124.33333333333337,
+      "h": 26
+    }
+  },
+  "win": null,
+  "hudText": "— O -\nLo > »\nCREDITO 105,10 € APUESTA 0,10 €"
+}

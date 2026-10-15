@@ -1,6 +1,6 @@
 import { test as base, selectors, type BrowserContext, type Page } from '@playwright/test';
 import { contextOptionsFor, loginToStorageState, type StorageState } from '../src/auth/login';
-import { cdpUrl, savedSession } from '../src/auth/session';
+import { cdpUrl, connectBrave, savedSession } from '../src/auth/session';
 import { applyTrustedTraffic } from '../src/auth/trusted-traffic';
 import { credentialsFor, type AccountKind } from '../src/config/env';
 import { pragmaticLayout, type GameLayout } from '../src/config/game-layout';
@@ -45,11 +45,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   // CDP_URL set → run inside a browser the player opened themselves (npm run browser), instead of launching one.
   // Betsson's fraud detection rejects logins from Playwright-launched browsers.
   browser: [
-    async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
-      const cdp = cdpUrl();
-      const browser = cdp
-        ? await playwright.chromium.connectOverCDP(cdp)
-        : await playwright[browserName].launch({ ...launchOptions, headless, channel });
+    async ({ playwright }, use) => {
+      // Brave only: attach to the Brave window opened by `npm run browser:fresh` (never launch another browser)
+      const browser = await connectBrave(playwright.chromium);
       await use(browser);
       await browser.close(); // over CDP this only disconnects: the player's browser stays open
     },

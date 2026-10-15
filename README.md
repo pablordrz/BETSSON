@@ -18,12 +18,20 @@ game's DOM or on "I clicked Spin" — it proves each step from pixels.
 
 Bonus cross-checks (reported as `INFO`, never the proof): provider server responses vs. OCR, in-game credit vs. Betsson balance.
 
+## Requirements
+
+- **Node.js 22+**
+- **Brave** ([brave.com](https://brave.com)). **This project runs only on Brave**: Betsson's fraud detection rejects
+  browsers launched by automation, so the checker attaches to a normal Brave window over CDP and verifies it is Brave
+  (`navigator.brave`). There is no Chrome/Chromium fallback. Brave is found automatically in its standard folder on
+  Windows, macOS and Linux; otherwise set `BRAVE_PATH` to the Brave executable.
+- The two test accounts (see "Configuration: `.env`").
+
 ## Quick start
 
 ```bash
 npm ci
-npx playwright install chromium
-cp .env.example .env      # fill in the test accounts from Betsson (never commit .env)
+cp .env.example .env      # then add the two passwords (see "Configuration: .env"); never commit .env
 
 npm run calibrate         # NO spin: logs in, opens the game, dumps what the checker sees
 npm test                  # both scenarios on betsson.es  (⚠ Real Play spin)
@@ -34,30 +42,34 @@ npm run unit              # offline tests of the pure parsing / vision helpers
 Reports: `reports/index.html` (pass/fail per check and scenario) and `reports/playwright/` (screenshots with OCR regions
 drawn, trace and video per test).
 
-## Run in Brave (recommended)
+## Run in Brave
 
 Betsson's fraud detection rejects logins from Playwright-launched browsers ("Actualiza la página y vuelve a intentarlo
-en breve"). The checker therefore drives a normal **Brave** (or Chrome) window over CDP.
+en breve"). The checker therefore drives a normal **Brave** window over CDP.
 
-Setup once: `npm ci`, `cp .env.example .env`, fill in `FUNDED_USER` / `FUNDED_PASS` and set
-`CDP_URL=http://127.0.0.1:9222` in `.env`.
+Setup once: `npm ci` and the `.env` file below.
 
-**From scratch** (the checker does the whole journey: cookies, login, provider page, game):
+## Configuration: `.env`
+
+`.env.example` already has everything filled in **except the passwords**:
 
 ```bash
-npm run browser:fresh  # opens Brave with an EMPTY profile (.cache/browser-profile) and DevTools on 127.0.0.1:9222
-npm run calibrate      # NO spin: logs in, opens the game, dumps what the checker sees
-npm test               # both scenarios (⚠ Real Play spin)
+cp .env.example .env
+# then write the two passwords in .env (FUNDED_PASS, EMPTY_PASS): the team shares them privately
 ```
 
-Keep the Brave window open while the tests run. Brave is found automatically on Windows / macOS / Linux; set
-`BROWSER_PATH` to use another Chromium-based browser (e.g. Chrome).
+| Variable | Value in `.env.example` | What it is |
+|---|---|---|
+| `FUNDED_USER` / `FUNDED_PASS` | test account with balance / **empty: fill in** | Scenario 1, spin series, report demo |
+| `EMPTY_USER` / `EMPTY_PASS` | test account without balance / **empty: fill in** | Scenario 2 (the spin must be blocked). Without it, scenario 2 is skipped |
+| `CDP_URL` | `http://127.0.0.1:9222` | Brave driven over CDP (`npm run browser:fresh` opens it on this port) |
+| `GAME_SLUG` | `triple-hop-pots` | Pragmatic Play game to test (empty = first slot of the Pragmatic Play page) |
+| `EXTRA_HTTP_HEADERS` | Betsson `x-obg-*` headers (JSON) | Mark the traffic as test traffic; sent only to the Betsson domain |
+| `BRAVE_PATH`, `PROXY_*` | commented out | Optional: Brave installed in a non-standard folder, a proxy |
 
-**Reusing a game you opened by hand:** `npm run browser` (keeps the profile), open a Pragmatic Play game in Real Play
-in that window, then run the tests: the checker attaches to that tab instead of navigating.
-
-- `npm run login` saves the browser's session to `.auth/` (gitignored) for runs without CDP.
-- Optional `EXTRA_HTTP_HEADERS` (JSON, from the mentors) is added only to requests to the Betsson domain.
+- **Passwords never go into the repository**: `.env` is gitignored; only `.env.example` (without passwords) is versioned.
+- `.env.example` contains the test accounts' **user names** and the `x-obg-*` headers. If the repository is made
+  public, empty `EXTRA_HTTP_HEADERS` in `.env.example` and share it privately, like the passwords.
 
 ## Run everything in one go: `npm run all`
 
@@ -188,7 +200,7 @@ Design choices:
 - **Idle noise** is measured before spinning, so idle animations are not mistaken for a spin.
 - **No retries** (`retries: 0`): a retry is another real-money spin.
 - Every check is a soft assertion → the report shows all checks; the test still fails if any check fails.
-- Headed Chromium, fixed viewport 1600×900, scale 1 for stable OCR. Cookies: "reject all" (OneTrust).
+- Brave window, fixed size 1600×1000, scale 1 for stable OCR. Cookies: "reject all" (OneTrust).
 - Spanish OCR data ships as an npm package (`@tesseract.js-data/spa`) → no CDN download at runtime.
 
 ## GitHub Actions
