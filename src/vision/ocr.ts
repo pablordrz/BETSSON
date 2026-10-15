@@ -34,6 +34,8 @@ export interface OcrOptions {
   /** Added to every box, e.g. the position of a crop inside the full canvas. */
   offset?: { x: number; y: number };
   minConfidence?: number;
+  /** Keep only pixels brighter than this (0–255) as text: game HUD labels/amounts are bright on busy art. */
+  brightTextThreshold?: number;
 }
 
 /**
@@ -64,7 +66,7 @@ export class Ocr {
     const scale = opts.scale ?? 2;
     const off = opts.offset ?? { x: 0, y: 0 };
     const minConf = opts.minConfidence ?? 30;
-    const prepared = await preprocess(png, scale);
+    const prepared = await preprocess(png, scale, opts.brightTextThreshold);
     const worker = await this.worker(lang);
     const { data } = await worker.recognize(prepared);
     const words: OcrWord[] = (data.words ?? [])
@@ -99,9 +101,22 @@ function localLangPath(lang: string): string | undefined {
   }
 }
 
-/** Greyscale, upscale, stretch contrast, and invert dark backgrounds (Tesseract prefers dark-on-light). */
-export async function preprocess(png: Buffer, scale: number): Promise<Buffer> {
+/**
+ * Greyscale, upscale, stretch contrast, and invert dark backgrounds (Tesseract prefers dark-on-light).
+ * With brightTextThreshold: binarise instead (only bright text survives).
+ */
+export async function preprocess(png: Buffer, scale: number, brightTextThreshold?: number): Promise<Buffer> {
   const meta = await sharp(png).metadata();
+  if (brightTextThreshold !== undefined) {
+    // bright text → black on white, background (whatever the artwork) → white
+    return sharp(png)
+      .greyscale()
+      .resize({ width: Math.round((meta.width ?? 100) * scale), kernel: 'lanczos3' })
+      .threshold(brightTextThreshold)
+      .negate({ alpha: false })
+      .png()
+      .toBuffer();
+  }
   const stats = await sharp(png).greyscale().stats();
   const mean = stats.channels[0].mean;
   let img = sharp(png)

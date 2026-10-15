@@ -17,11 +17,13 @@ export class GameScreen {
 
   /** Waits until a large canvas is visible in the provider iframe (falls back to any frame). */
   static async attach(page: Page, frameUrl: RegExp, timeoutMs = 120_000): Promise<GameScreen> {
-    const deadline = Date.now() + timeoutMs;
+    const start = Date.now();
+    const deadline = start + timeoutMs;
     while (Date.now() < deadline) {
       const frames = page.frames();
       const preferred = frames.filter((f) => frameUrl.test(f.url()));
-      const ordered = Date.now() > deadline - timeoutMs / 2 ? [...preferred, ...frames] : preferred;
+      // provider frames may be srcdoc/about:blank: after a few seconds also look in every other frame
+      const ordered = Date.now() - start > 3000 ? [...preferred, ...frames] : preferred;
       for (const f of ordered) {
         const canvases = f.locator('canvas');
         const n = await canvases.count().catch(() => 0);

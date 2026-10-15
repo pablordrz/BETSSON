@@ -25,21 +25,37 @@ export class BetssonWallet {
   ) {}
 
   async read(): Promise<WalletReading> {
-    const tab = (this.tab ??= await this.context.newPage());
+    // Opened from the game tab (like a player's "open in new tab"), so it inherits the tab's session.
+    const tab = (this.tab ??= await this.openFromGameTab());
     try {
       await tab.goto(this.market.baseUrl + this.market.providerPath, { waitUntil: 'domcontentloaded' });
+      // The header re-renders while it loads: re-locate and retry instead of failing on a detached element.
       const el = tab.locator(this.market.selectors.headerBalance).filter({ hasText: /\d/ }).first();
-      await el.waitFor({ state: 'visible', timeout: 30_000 });
-      let money: Money | null = null;
-      for (let i = 0; i < 10 && !money; i++) {
-        money = parseMoney(await el.innerText());
-        if (!money) await sleep(1000);
+      let last = '';
+      for (let i = 0; i < 10; i++) {
+        try {
+          await el.waitFor({ state: 'visible', timeout: 30_000 });
+          last = await el.innerText();
+          const money = parseMoney(last);
+          if (money) return { money, screenshot: await el.screenshot(), at: new Date() };
+        } catch {
+          // detached during a re-render: try again
+        }
+        await sleep(700);
       }
-      if (!money) throw new Error(`Betsson balance not parseable: "${await el.innerText()}"`);
-      return { money, screenshot: await el.screenshot(), at: new Date() };
+      throw new Error(`Betsson balance not readable: "${last}"`);
     } finally {
       await this.gamePage.bringToFront();
     }
+  }
+
+  private async openFromGameTab(): Promise<Page> {
+    const url = this.market.baseUrl + this.market.providerPath;
+    const [tab] = await Promise.all([
+      this.context.waitForEvent('page'),
+      this.gamePage.evaluate((u) => void window.open(u, '_blank'), url),
+    ]);
+    return tab;
   }
 
   /** Polls the Betsson balance until it satisfies `ok` (wallet updates can lag the game) or the timeout expires. */

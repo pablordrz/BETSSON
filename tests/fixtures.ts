@@ -9,7 +9,9 @@ import { BetssonSite } from '../src/pages/betsson-site';
 import { BetssonWallet } from '../src/pages/betsson-wallet';
 import { Checks } from '../src/utils/checks';
 import { ProviderTap } from '../src/utils/provider-tap';
+import { pragmaticControls, type GameControls } from '../src/vision/controls/game-controls';
 import { Ocr } from '../src/vision/ocr';
+import { StepRunner } from '../src/steps';
 
 export interface WorkerOptions {
   marketId: MarketId;
@@ -24,11 +26,15 @@ interface WorkerFixtures extends WorkerOptions {
   market: MarketConfig;
   layout: GameLayout;
   ocr: Ocr;
+  /** How the player recognises and uses the provider's controls (spin, continue). */
+  controls: GameControls;
   /** Sessions for both accounts, created once per worker OUTSIDE any test (not traced, not recorded). */
   auth: Record<AccountKind, AuthResult>;
 }
 
 interface TestFixtures extends TestOptions {
+  /** Runs atomic steps with logs, timing, evidence and a PASS/FAIL row each (src/steps). */
+  steps: StepRunner;
   site: BetssonSite;
   wallet: BetssonWallet;
   checks: Checks;
@@ -62,6 +68,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     },
     { scope: 'worker' },
   ],
+
+  controls: [async ({ layout, ocr, market }, use) => use(pragmaticControls(layout, ocr, market)), { scope: 'worker' }],
 
   auth: [
     async ({ browser, market }, use) => {
@@ -104,7 +112,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       // Fresh profile → the checker logs in itself, in that real browser (outside the trace: no password in it)
       selectors.setTestIdAttribute('data-test-id');
       const lobby = new BetssonSite(context.pages()[0] ?? (await context.newPage()), market);
-      await lobby.open(market.providerPath);
+      await lobby.open(lobby.entryPath()); // login (if needed) returns here: the game page or the Pragmatic Play page
       if (!(await lobby.isLoggedIn())) {
         const creds = credentialsFor(market.id, account);
         if (!creds) testInfo.skip(true, `${market.site}: no credentials for the ${account} account`);
@@ -139,7 +147,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   // CDP mode: the tab where the player opened the game; otherwise a new tab.
   page: async ({ context, market }, use) => {
-    const open = cdpUrl() ? context.pages().find((p) => new URL(p.url()).pathname.startsWith(market.gamePathPrefix)) : undefined;
+    // Reuse the tab where the login happened: a fresh tab may not carry the session (Betsson shows the login again).
+    const pages = cdpUrl() ? context.pages() : [];
+    const open =
+      pages.find((p) => new URL(p.url()).pathname.startsWith(market.gamePathPrefix)) ??
+      pages.find((p) => p.url().startsWith(market.baseUrl));
     const page = open ?? (await context.newPage());
     if (open) await open.bringToFront();
     await use(page);
@@ -162,6 +174,12 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   checks: async ({ market }, use, testInfo) => {
     await use(new Checks(testInfo, market, testInfo.title));
+  },
+
+  steps: async ({ site, wallet, ocr, market, layout, controls, checks }, use, testInfo) => {
+    const runner = new StepRunner({ site, wallet, ocr, market, layout, controls }, checks, testInfo, { quiet: process.env.STEP_LOGS === '0' });
+    await use(runner);
+    await runner.attachLog();
   },
 
   providerTap: async ({ page }, use) => {

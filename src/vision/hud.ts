@@ -4,8 +4,12 @@ import type { MarketConfig } from '../config/markets';
 import { moneyEq, parseMoney, type Money } from '../utils/money';
 import { normalize, sleep } from '../utils/text';
 import type { Mark } from './annotate';
-import { cropRel, imageSize, type GameScreen } from './game-screen';
+import type { ScreenTarget } from './controls/screen-target';
+import { cropRel, type GameScreen } from './game-screen';
 import { unionBox, type Box, type Ocr, type OcrResult, type OcrRow } from './ocr';
+
+/** Pragmatic HUD text (yellow labels, white amounts) is brighter than this on any game artwork. */
+const HUD_TEXT_THRESHOLD = 210;
 
 type LabelKind = 'credit' | 'bet' | 'win';
 const KINDS: LabelKind[] = ['credit', 'bet', 'win'];
@@ -85,8 +89,14 @@ export async function readHud(
 ): Promise<HudReading> {
   const full = frame ?? (await game.capture());
   const { png, box } = await cropRel(full, layout.hud);
-  const result = await ocr.read(png, market.ocrLang, { scale: 3, offset: { x: box.x, y: box.y } });
-  const parsed = parseHud(result.rows, market.gameText);
+  // 1st: only the bright HUD text (robust on busy artwork); 2nd: plain contrast-stretched image
+  let result!: OcrResult;
+  let parsed!: ReturnType<typeof parseHud>;
+  for (const brightTextThreshold of [HUD_TEXT_THRESHOLD, undefined]) {
+    result = await ocr.read(png, market.ocrLang, { scale: 3, offset: { x: box.x, y: box.y }, brightTextThreshold });
+    parsed = parseHud(result.rows, market.gameText);
+    if (parsed.credit?.value && parsed.bet?.value) break;
+  }
   const marks: Mark[] = [{ box, label: 'HUD region', color: '#888888' }];
   for (const k of KINDS) {
     const v = parsed[k];
@@ -104,31 +114,53 @@ export async function waitForPlayableHud(
   ocr: Ocr,
   market: MarketConfig,
   layout: GameLayout,
+  continueButton: ScreenTarget,
   timeoutMs = 120_000,
 ): Promise<HudReading> {
   const start = Date.now();
-  let blindClicks = 0;
   let last: HudReading | undefined;
+  let pressedContinue = false;
   while (Date.now() - start < timeoutMs) {
     const frame = await game.capture();
     last = await readHud(game, ocr, market, layout, frame);
     if (last.credit?.value && last.bet?.value) return last;
-    const sawAnyLabel = !!(last.credit || last.bet || last.win);
-    const full = await ocr.read(frame, market.ocrLang, { scale: 1.5 });
-    const cont = full.words.find((w) => allGameTexts.some((t) => t.continue.test(normalize(w.text))));
-    const size = await imageSize(frame);
-    if (cont) {
-      await game.clickImagePoint(cont.box.x + cont.box.w / 2, cont.box.y + cont.box.h / 2, size.width, size.height);
-    } else if (!sawAnyLabel && Date.now() - start > 25_000 && blindClicks < 1) {
-      // Some intros only say "click anywhere" with a graphic. Never done once the HUD is visible.
-      blindClicks++;
-      await game.clickRel(0.5, 0.45);
+    // Intro/splash: press the continue button the player sees (text or icon) ONCE, and never once the HUD is
+    // visible: on Pragmatic the same round icon is the SPIN button, so a second press could start a paid spin.
+    if (!pressedContinue && !(last.credit || last.bet || last.win)) {
+      const cont = await continueButton.locate(frame);
+      if (cont) {
+        await game.clickRel(cont.x, cont.y);
+        pressedContinue = true;
+      }
     }
-    await sleep(2000);
+    await sleep(700);
   }
   throw new Error(
     `Game HUD (credit/bet) not readable after ${timeoutMs / 1000}s. Last OCR of HUD:\n${last?.ocr.text ?? '(none)'}`,
   );
+}
+
+/**
+ * Reads CREDIT and BET until two consecutive readings agree on BOTH (a single OCR read is never trusted with money).
+ * Retries with short adaptive pauses; returns the last reading and whether it was stable.
+ */
+export async function readHudStable(
+  game: GameScreen,
+  ocr: Ocr,
+  market: MarketConfig,
+  layout: GameLayout,
+  attempts = 5,
+): Promise<{ reading: HudReading; stable: boolean }> {
+  const same = (a: HudValue | null, b: HudValue | null) =>
+    !!a?.value && !!b?.value && a.value.currency === b.value.currency && moneyEq(a.value.amount, b.value.amount, 0);
+  let prev = await readHud(game, ocr, market, layout);
+  for (let i = 1; i < attempts; i++) {
+    await sleep(300 * i);
+    const cur = await readHud(game, ocr, market, layout);
+    if (same(prev.credit, cur.credit) && same(prev.bet, cur.bet)) return { reading: cur, stable: true };
+    prev = cur;
+  }
+  return { reading: prev, stable: false };
 }
 
 /** Reads the HUD until two consecutive readings agree (credit counters animate up after a win). */

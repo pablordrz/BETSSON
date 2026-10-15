@@ -27,7 +27,7 @@ export interface MarketConfig {
   /** tesseract.js language code. */
   ocrLang: string;
   currency: CurrencyCode;
-  /** Slug of the Pragmatic Play game to test (as in /casino/tragaperras-slots/<slug>). */
+  /** Slug of the Pragmatic Play game to test (as in /casino/tragaperras-slots/<slug>); empty = first slot on the provider page. */
   gameSlug: string;
   testIds: {
     loginButton: string;
@@ -52,9 +52,22 @@ export interface MarketConfig {
   ui: {
     cookiesSettings: RegExp;
     cookiesRejectAll: RegExp;
-    /** CALIBRATE: Spanish regulation asks for session limits (time / amount) before playing slots. */
-    sessionLimitsDialog: RegExp;
-    sessionLimitsConfirm: RegExp;
+    /**
+     * Regulated "game session" before playing slots (Spain): an optional responsible-gambling notice, then a
+     * dialog to choose play time and loss limit. Matched by intent (flexible regexes), not exact strings.
+     */
+    gameSession: {
+      /** Notice shown when the previous game session ended recently. */
+      notice: RegExp;
+      /** Dialog with the play-time and loss-limit choices. */
+      limits: RegExp;
+      /** Button that starts the game session (in the notice, the limits dialog and the game placeholder). */
+      start: RegExp;
+      /** A play-time option (the shortest one is chosen). */
+      timeOption: RegExp;
+      /** A loss-limit option (the lowest one is chosen). */
+      lossOption: RegExp;
+    };
   };
   gameText: GameText;
 }
@@ -74,7 +87,7 @@ export const markets: Record<MarketId, MarketConfig> = {
     language: 'Spanish',
     ocrLang: 'spa',
     currency: 'EUR',
-    gameSlug: env('GAME_SLUG') ?? 'big-bass-blast',
+    gameSlug: env('GAME_SLUG') ?? '',
     testIds: {
       loginButton: 'login-button',
       emailInput: 'email-input',
@@ -95,8 +108,13 @@ export const markets: Record<MarketId, MarketConfig> = {
     ui: {
       cookiesSettings: /^configuraci[oó]n de cookies$/i,
       cookiesRejectAll: /^rechazar(las)? todas?$/i,
-      sessionLimitsDialog: /l[ií]mites? de (la )?sesi[oó]n|sesi[oó]n de juego|duraci[oó]n de la sesi[oó]n/i,
-      sessionLimitsConfirm: /^(continuar|confirmar|aceptar|guardar|jugar|empezar a jugar)$/i,
+      gameSession: {
+        notice: /finalizaste tu sesi[oó]n|juego (m[aá]s )?seguro|juegas de forma segura/i,
+        limits: /tiempo de juego|l[ií]mite de (p[eé]rdidas|tiempo)|l[ií]mites? de (la )?sesi[oó]n/i,
+        start: /^(iniciar( una nueva)? sesi[oó]n|empezar a jugar|continuar|jugar)$/i,
+        timeOption: /^\d+\s*(min|minutos?|horas?)$/i,
+        lossOption: /^\d+\s*%/,
+      },
     },
     gameText: gameTexts.Spanish,
   },

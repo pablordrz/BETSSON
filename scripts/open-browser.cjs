@@ -25,12 +25,37 @@ if (!exe) {
   console.error('No Brave/Chrome found: set BROWSER_PATH');
   process.exit(1);
 }
+/** Closes a test browser still listening on the DevTools port (otherwise "fresh" would reuse it). */
+async function closeRunningBrowser() {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/json/version`);
+    const { webSocketDebuggerUrl } = await res.json();
+    await new Promise((resolve) => {
+      const ws = new WebSocket(webSocketDebuggerUrl);
+      ws.onopen = () => ws.send(JSON.stringify({ id: 1, method: 'Browser.close' }));
+      ws.onclose = resolve;
+      ws.onerror = resolve;
+      setTimeout(resolve, 3000);
+    });
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      const alive = await fetch(`http://127.0.0.1:${port}/json/version`).then(() => true, () => false);
+      if (!alive) break;
+    }
+    await new Promise((r) => setTimeout(r, 500)); // let it release the profile files
+  } catch {
+    // nothing running
+  }
+}
+
 const profile = path.resolve('.cache', 'browser-profile');
-// --fresh: start from an empty profile (no cookies, no session) so the checker does the whole journey itself
-if (process.argv.includes('--fresh')) fs.rmSync(profile, { recursive: true, force: true });
-fs.mkdirSync(profile, { recursive: true });
-spawn(exe, [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${profile}`, '--no-first-run', 'https://www.betsson.es/inicio'], {
-  detached: true,
-  stdio: 'ignore',
-}).unref();
-console.log(`Opened ${path.basename(exe)} with DevTools on http://127.0.0.1:${port} (set CDP_URL to that in .env)`);
+(async () => {
+  await closeRunningBrowser();
+  // --fresh: start from an empty profile (no cookies, no session) so the checker does the whole journey itself
+  if (process.argv.includes('--fresh')) fs.rmSync(profile, { recursive: true, force: true });
+  fs.mkdirSync(profile, { recursive: true });
+  // Fixed window size: Betsson shows its desktop header (balance) and the game renders at a stable size for OCR.
+  const args = [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${profile}`, '--no-first-run', '--window-size=1600,1000', '--window-position=0,0', 'https://www.betsson.es/inicio'];
+  spawn(exe, args, { detached: true, stdio: 'ignore' }).unref();
+  console.log(`Opened ${path.basename(exe)} with DevTools on http://127.0.0.1:${port} (set CDP_URL to that in .env)`);
+})();

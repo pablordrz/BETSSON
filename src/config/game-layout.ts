@@ -17,10 +17,8 @@ export interface GameLayout {
   hud: Rel;
   /** Reel area, used to detect that a spin really started and settled. */
   reels: Rel;
-  /** Fallback spin button position (centre), only used if template + keyboard fail. */
+  /** Fallback spin button position (centre), only used if the icon is not found and SPACE does nothing. */
   spinButton: { x: number; y: number };
-  /** Ordered strategies used to trigger a spin. */
-  spinStrategies: Array<'template' | 'keyboard' | 'click'>;
 }
 
 function parseRel(v: string | undefined): { x: number; y: number } | undefined {
@@ -34,8 +32,4 @@ export const pragmaticLayout: GameLayout = {
   hud: { x: 0, y: 0.8, w: 1, h: 0.2 },
   reels: { x: 0.18, y: 0.12, w: 0.64, h: 0.6 },
   spinButton: parseRel(process.env.SPIN_REL) ?? { x: 0.9, y: 0.5 },
-  spinStrategies: (process.env.SPIN_STRATEGIES ?? 'template,keyboard,click')
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s): s is 'template' | 'keyboard' | 'click' => ['template', 'keyboard', 'click'].includes(s)),
 };

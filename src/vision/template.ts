@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import sharp from 'sharp';
 
 /**
- * Minimal template matching (normalised sum of absolute differences on greyscale, downscaled).
- * Used to find the spin button visually instead of clicking fixed coordinates.
- * Templates live in assets/templates/<game-slug>/spin.png (crop it from a calibration screenshot).
+ * Template matching by zero-mean normalised cross-correlation (ZNCC) on greyscale: insensitive to brightness and
+ * contrast, and flat areas score 0 (no false matches on plain backgrounds). Used to find controls visually
+ * (e.g. Pragmatic's round spin icon) instead of clicking fixed coordinates.
  */
-const WORK_WIDTH = 360;
+const WORK_WIDTH = 720;
+/** Templates smaller than this (in work pixels) carry too little detail to be told apart from noise. */
+const MIN_TEMPLATE_PX = 14;
 
 async function grey(png: Buffer, width: number) {
   const { data, info } = await sharp(png).greyscale().resize({ width }).raw().toBuffer({ resolveWithObject: true });
@@ -14,29 +16,85 @@ async function grey(png: Buffer, width: number) {
 }
 
 export interface TemplateMatch {
-  score: number; // 1 = identical
+  score: number; // ZNCC: 1 = identical pattern, 0 = unrelated
   x: number; // centre, fraction of screen width
   y: number; // centre, fraction of screen height
 }
 
-export async function findTemplate(screen: Buffer, template: Buffer): Promise<TemplateMatch> {
+export interface TemplateOptions {
+  /** Template size relative to its original size on a screen of the same width (multi-scale search). */
+  scale?: number;
+  /** Only compare pixels inside the inscribed circle: round buttons on any background. */
+  circular?: boolean;
+  /** Only search for the template's CENTRE inside this region (fractions of the screen): fast re-checks. */
+  region?: { x: number; y: number; w: number; h: number };
+}
+
+export async function findTemplate(screen: Buffer, template: Buffer, opts: TemplateOptions = {}): Promise<TemplateMatch> {
+  const none = { score: -1, x: 0, y: 0 };
   const sMeta = await sharp(screen).metadata();
   const tMeta = await sharp(template).metadata();
-  const factor = WORK_WIDTH / (sMeta.width ?? WORK_WIDTH);
-  const S = await grey(screen, WORK_WIDTH);
-  const T = await grey(template, Math.max(4, Math.round((tMeta.width ?? 40) * factor)));
+  const workWidth = Math.min(WORK_WIDTH, sMeta.width ?? WORK_WIDTH);
+  const factor = workWidth / (sMeta.width ?? workWidth);
+  const tw = Math.round((tMeta.width ?? 40) * factor * (opts.scale ?? 1));
+  if (tw < MIN_TEMPLATE_PX) return none;
+  const S = await grey(screen, workWidth);
+  const T = await grey(template, tw);
+  if (T.w > S.w || T.h > S.h) return none;
+
+  // template samples (zero-mean), optionally restricted to the inscribed circle
+  const cx = (T.w - 1) / 2;
+  const cy = (T.h - 1) / 2;
+  const r2 = Math.min(cx, cy) ** 2;
+  const offs: number[] = [];
+  const tv: number[] = [];
+  for (let ty = 0; ty < T.h; ty++) {
+    for (let tx = 0; tx < T.w; tx++) {
+      if (opts.circular && (tx - cx) ** 2 + (ty - cy) ** 2 > r2) continue;
+      offs.push(ty * S.w + tx);
+      tv.push(T.data[ty * T.w + tx]);
+    }
+  }
+  const n = tv.length;
+  const tMean = tv.reduce((a, b) => a + b, 0) / n;
+  for (let i = 0; i < n; i++) tv[i] -= tMean;
+  const tNorm = Math.sqrt(tv.reduce((a, b) => a + b * b, 0));
+  if (tNorm === 0) return none;
+
+  const zncc = (x: number, y: number) => {
+    const base = y * S.w + x;
+    let sum = 0;
+    let sumSq = 0;
+    let cross = 0;
+    for (let i = 0; i < n; i++) {
+      const v = S.data[base + offs[i]];
+      sum += v;
+      sumSq += v * v;
+      cross += v * tv[i];
+    }
+    const varS = sumSq - (sum * sum) / n;
+    return varS <= 1e-6 ? 0 : cross / (Math.sqrt(varS) * tNorm);
+  };
+
+  // search window for the template's top-left corner (whole screen, or around a known position)
+  const r = opts.region;
+  const xMin = r ? Math.max(0, Math.floor(r.x * S.w - T.w / 2)) : 0;
+  const yMin = r ? Math.max(0, Math.floor(r.y * S.h - T.h / 2)) : 0;
+  const xMax = r ? Math.min(S.w - T.w, Math.ceil((r.x + r.w) * S.w - T.w / 2)) : S.w - T.w;
+  const yMax = r ? Math.min(S.h - T.h, Math.ceil((r.y + r.h) * S.h - T.h / 2)) : S.h - T.h;
+
+  // coarse grid, then refine around the best position pixel by pixel
   let best = { score: -1, x: 0, y: 0 };
-  const step = 2;
-  for (let y = 0; y + T.h <= S.h; y += step) {
-    for (let x = 0; x + T.w <= S.w; x += step) {
-      let sad = 0;
-      for (let ty = 0; ty < T.h; ty += 2) {
-        const so = (y + ty) * S.w + x;
-        const to = ty * T.w;
-        for (let tx = 0; tx < T.w; tx += 2) sad += Math.abs(S.data[so + tx] - T.data[to + tx]);
-      }
-      const samples = Math.ceil(T.h / 2) * Math.ceil(T.w / 2);
-      const score = 1 - sad / (255 * samples);
+  for (let y = yMin; y <= yMax; y += 3) {
+    for (let x = xMin; x <= xMax; x += 3) {
+      const score = zncc(x, y);
+      if (score > best.score) best = { score, x, y };
+    }
+  }
+  const coarse = best;
+  for (let y = Math.max(0, coarse.y - 2); y <= Math.min(S.h - T.h, coarse.y + 2); y++) {
+    for (let x = Math.max(0, coarse.x - 2); x <= Math.min(S.w - T.w, coarse.x + 2); x++) {
+      const score = zncc(x, y);
       if (score > best.score) best = { score, x, y };
     }
   }

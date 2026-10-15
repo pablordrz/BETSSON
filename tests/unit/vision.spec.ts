@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs';
 /**
  * Offline unit tests of the pure parsing / vision helpers (no site, no browser):  npm run unit
  */
@@ -5,10 +7,14 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import { gameTexts } from '../../src/config/game-text';
 import { detectCurrency, moneyEq, parseAmount, parseMoney } from '../../src/utils/money';
-import { parseHud } from '../../src/vision/hud';
+import { parseHud, readHud } from '../../src/vision/hud';
+import { Ocr } from '../../src/vision/ocr';
+import { getMarket } from '../../src/config/markets';
+import { pragmaticLayout } from '../../src/config/game-layout';
 import { diffRatio } from '../../src/vision/motion';
 import { groupRows, type OcrWord } from '../../src/vision/ocr';
 import { findTemplate } from '../../src/vision/template';
+import { TemplateTarget } from '../../src/vision/controls/screen-target';
 
 test.describe('money', () => {
   test('parses es-ES and en number formats', () => {
@@ -75,5 +81,59 @@ test.describe('vision', () => {
     expect(m.score).toBeGreaterThan(0.9);
     expect(m.x).toBeCloseTo(720 / 800, 1);
     expect(m.y).toBeCloseTo(220 / 450, 1);
+  });
+  test('Pragmatic round arrows icon is found by image at another scale, on another background', async () => {
+    const icon = fs.readFileSync(path.resolve('assets/templates/pragmatic/spin.png'));
+    const bigger = await sharp(icon).resize(84).png().toBuffer(); // the game shows it larger than in the template
+    const screen = await sharp({ create: { width: 1200, height: 675, channels: 3, background: { r: 200, g: 120, b: 40 } } })
+      .composite([{ input: bigger, left: 900, top: 520 }])
+      .png()
+      .toBuffer();
+    const target = new TemplateTarget('round arrows button', path.resolve('assets/templates/pragmatic/spin.png'), { circular: true });
+    const m = await target.locate(screen);
+    expect(m, 'icon found').not.toBeNull();
+    expect(m!.x).toBeCloseTo(942 / 1200, 1);
+    expect(m!.y).toBeCloseTo(562 / 675, 1);
+  });
+  test('the icon is NOT found where there is none', async () => {
+    const screen = await sharp({ create: { width: 1200, height: 675, channels: 3, background: { r: 200, g: 120, b: 40 } } })
+      .composite([{ input: Buffer.from('<svg width="1200" height="675"><rect x="300" y="200" width="200" height="120" fill="#123"/></svg>') }])
+      .png()
+      .toBuffer();
+    const target = new TemplateTarget('round arrows button', path.resolve('assets/templates/pragmatic/spin.png'), { circular: true });
+    expect(await target.locate(screen)).toBeNull();
+  });
+});
+
+test.describe('real Pragmatic frame (Triple Hop Pots, betsson.es)', () => {
+  const frame = () => fs.readFileSync(path.resolve('tests/unit/fixtures/pragmatic-triple-hop-pots.png'));
+
+  test('HUD: CRÉDITO 99,90 € and APUESTA 2,00 € are read from the screen', async () => {
+    test.setTimeout(60_000);
+    const ocr = new Ocr();
+    try {
+      const hud = await readHud(undefined as never, ocr, getMarket('es'), pragmaticLayout, frame());
+      expect(hud.credit?.value).toMatchObject({ amount: 99.9, currency: 'EUR' });
+      expect(hud.bet?.value).toMatchObject({ amount: 2, currency: 'EUR' });
+      expect(hud.credit?.expectedLanguage).toBe(true);
+    } finally {
+      await ocr.terminate();
+    }
+  });
+
+  test('spin button is found by image where the player sees it', async () => {
+    const target = new TemplateTarget('round arrows button', path.resolve('assets/templates/pragmatic/spin.png'), { circular: true });
+    const m = await target.locate(frame());
+    expect(m).not.toBeNull();
+    expect(m!.x).toBeCloseTo(0.5, 1);
+    expect(m!.y).toBeCloseTo(0.83, 1);
+  });
+
+  test('bet "−" button is found by image', async () => {
+    const target = new TemplateTarget('bet minus button', path.resolve('assets/templates/pragmatic/bet-minus.png'), { circular: true });
+    const m = await target.locate(frame());
+    expect(m).not.toBeNull();
+    expect(m!.x).toBeCloseTo(548 / 1212, 1);
+    expect(m!.y).toBeCloseTo(570 / 683, 1);
   });
 });

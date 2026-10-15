@@ -37,6 +37,8 @@ export default defineConfig<TestOptions, WorkerOptions>({
   projects: [
     { name: es.site, testMatch: /scenarios[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     { name: `calibrate-${es.site}`, testMatch: /calibrate\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
+    { name: `series-${es.site}`, testMatch: /series[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
+    { name: `demo-${es.site}`, testMatch: /demo[\\/].*\.spec\.ts$/, use: { marketId: 'es', ...contextOptionsFor(es) } },
     { name: `login-${es.site}`, testMatch: /login-manual\.spec\.ts$/, use: { marketId: 'es' } },
     { name: 'unit', testMatch: /unit[\\/].*\.spec\.ts$/ },
   ],

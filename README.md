@@ -59,6 +59,58 @@ in that window, then run the tests: the checker attaches to that tab instead of 
 - `npm run login` saves the browser's session to `.auth/` (gitignored) for runs without CDP.
 - Optional `EXTRA_HTTP_HEADERS` (JSON, from the mentors) is added only to requests to the Betsson domain.
 
+## Atomic steps (how the team works on it)
+
+Every journey is a **plain sequence of atomic steps** (`src/steps/`). A step **detects** where it is, **acts** like a
+player, **validates on screen** that it worked, and **logs** what it read. Input and output are explicit, so each
+person can own, test and optimise one step (template matching, Hough, YOLO, a vision-language model, …) without
+touching the others — as long as the step keeps its input/output contract.
+
+```ts
+// tests/scenarios/scenario1-real-play-spin.spec.ts (abridged)
+await steps.must(checkLoggedIn);
+await steps.must(goToGame);
+await steps.must(startGameSession);
+const { game } = (await steps.must(attachGame)).data;
+await steps.must(enterGame, { game });
+const betsson = (await steps.must(readBetssonBalance)).data.balance;
+const before = (await steps.must(readGameHud, { game })).data;
+await steps.must(preflight, { credit: before.credit, bet: before.bet, betsson });
+await steps.must(spin, { game, credit: before.credit, noise });
+const after = (await steps.must(waitSpinEnd, { game, noise })).data;
+await steps.run(reconcileGame, { before: before.credit, bet: before.bet, after: after.credit, win: after.win });
+```
+
+`steps.must` = the journey cannot continue without it · `steps.run` = recorded, the journey goes on.
+The runner (`src/steps/runner.ts`) gives every step the same treatment: a Playwright step, console log lines
+(`▶ start · log ✓ pass ✗ fail ! error ↻ retry`, with what was read on screen), a PASS/FAIL row with evidence in
+the report, `steps.jsonl` attached to the test, controlled retries **only for read/navigation steps** (never for
+anything that can spend money) and fault isolation (an exception becomes a FAIL, not a crash).
+
+| Step | File | Validates (on screen) | Current technique |
+|---|---|---|---|
+| `site.loggedIn` | site.steps.ts | balance visible in Betsson's header | Betsson DOM (test ids) |
+| `site.goToGame` | site.steps.ts | game page is Pragmatic Play (`game-detail-pragmaticPlay…`) | GAME_SLUG or first slot of the provider page |
+| `site.gameSession` | site.steps.ts | regulated dialogs gone (shortest time, lowest loss limit) | Betsson DOM, intent regexes per market |
+| `game.attach` | site.steps.ts | canvas present and not blank | frame scan + pixel stdev |
+| `game.enter` | game.steps.ts | intro passed → CREDIT and BET readable | continue icon (ZNCC) / text (OCR), pressed once |
+| `game.readHud` | game.steps.ts | CREDIT/BET stable, market currency and language | OCR (bright-text binarisation) |
+| `game.minBet` | game.steps.ts | BET not higher than before | "−" icon (ZNCC), burst |
+| `betsson.readBalance` | site.steps.ts | balance in the market currency | Betsson header, second tab |
+| `money.preflight` | money.steps.ts | safe to spend one spin | pure rule |
+| `game.idleNoise` | game.steps.ts | idle animation level | frame diff |
+| `game.spin` | game.steps.ts | reels moved / CREDIT changed (never retried) | cascade: icon → SPACE → calibrated point |
+| `game.spinEnd` | game.steps.ts | button back + reels calm + CREDIT stable | ZNCC re-check + frame diff + OCR |
+| `money.wagerUsed` | money.steps.ts | BET unchanged and debit = BET | pure rule |
+| `money.game` | money.steps.ts | after = before − wager + payout | pure rule |
+| `money.betsson` | money.steps.ts | Betsson end = start − Σwagers + Σpayouts | Betsson header, polled |
+| `game.spinRejected` | game.steps.ts | reels did NOT move (scenario 2) | frame diff |
+| `game.message` | game.steps.ts | message visible in the market language | OCR + intent regexes |
+| `money.unchanged` | money.steps.ts | a balance did not move | pure rule |
+
+Journeys built from them: `npm test` (scenarios 1 and 2), `npm run spins` (series with a balance chart),
+`npm run demo` (fast continuous spins, no report). Set `STEP_LOGS=0` to silence step logs.
+
 ## Calibration (first thing once you have the accounts)
 
 `npm run calibrate` writes to `calibration/es/` (gitignored):
@@ -82,7 +134,12 @@ src/config/      markets.ts (betsson.es URLs, test ids, texts) · game-text.ts (
 src/auth/        login in a throw-away, untraced context → tests start authenticated (passwords never in traces/videos)
 src/pages/       BetssonSite (provider page, game page, Real Play, session limits) · BetssonWallet (header balance, side tab)
 src/vision/      GameScreen (canvas, clicks/keys) · ocr.ts (tesseract.js + preprocessing) · hud.ts (label → value)
-                 motion.ts (frame diff, idle noise, settle) · template.ts (spin button matching) · spin.ts · annotate.ts
+                 motion.ts (frame diff, idle noise, settle) · template.ts (ZNCC matching) · spin.ts · annotate.ts
+src/vision/controls/
+                 screen-target.ts  ScreenTarget: TemplateTarget (icon by image) · OcrTextTarget · FixedPointTarget · FirstVisibleTarget
+                 player-action.ts  PlayerAction: ClickOn(target) · PressKey(key)
+                 game-controls.ts  GameControls per provider: pragmaticControls() (round arrows icon = spin / continue)
+assets/templates/pragmatic/spin.png   the round arrows icon the checker looks for
 src/utils/       money.ts (es-ES / en amounts, 1-cent tolerance) · checks.ts (report rows) · provider-tap.ts (bonus)
 src/reporter/    checks-reporter.ts → checks.json + index.html
 tests/scenarios/ scenario1-real-play-spin.spec.ts · scenario2-insufficient-balance.spec.ts
@@ -93,8 +150,11 @@ Design choices:
 
 - betsson.es is built with web components (Shadow DOM) tagged with `data-test-id`; Playwright's `getByTestId`
   (configured to `data-test-id`) pierces shadow roots, so Betsson's UI is driven by stable test ids.
-- **Spin trigger** strategies in order: visual template → `SPACE` key → calibrated position. After each attempt the screen
-  decides (motion, or credit changed) and we stop — a spin is never triggered twice.
+- **Controls are found like a player finds them (SOLID):** scenarios depend on the `GameControls` abstraction, not on
+  coordinates. Pragmatic's spin button is located **by image** (multi-scale ZNCC template matching with a circular mask,
+  so it works at any window size and on any background); then `SPACE`; a calibrated position only as last resort.
+  After each action the **screen** decides (reels move, or credit changed) and we stop — a spin is never triggered twice.
+  A new provider = a new controls factory; nothing else changes.
 - **Idle noise** is measured before spinning, so idle animations are not mistaken for a spin.
 - **No retries** (`retries: 0`): a retry is another real-money spin.
 - Every check is a soft assertion → the report shows all checks; the test still fails if any check fails.
