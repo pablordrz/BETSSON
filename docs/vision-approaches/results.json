@@ -1,0 +1,395 @@
+{
+  "spinButton": {
+    "cases": [
+      {
+        "technique": "template ZNCC",
+        "case": "intro (black disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.11757944698974117,
+        "ms": 884
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro (black disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.11757944698974117,
+        "ms": 70
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro (black disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.11482924034600747,
+        "ms": 40
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro (black disk) ×0.7",
+        "verdict": "MISS",
+        "ms": 32
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "intro (black disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.09283803347425562,
+        "ms": 383
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro (black disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.1175785463889397,
+        "ms": 86
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro (black disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.11482738576065565,
+        "ms": 48
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro (black disk) ×1",
+        "verdict": "MISS",
+        "ms": 38
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "intro (black disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.07256588928174912,
+        "ms": 2232
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro (black disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.07256588928174912,
+        "ms": 346
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro (black disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.11482638805092084,
+        "ms": 69
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro (black disk) ×1.3",
+        "verdict": "MISS",
+        "ms": 65
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "playable (teal disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.05665120150337297,
+        "ms": 5491
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "playable (teal disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.05665120150337297,
+        "ms": 399
+      },
+      {
+        "technique": "Hough circles",
+        "case": "playable (teal disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.06263661074509796,
+        "ms": 48
+      },
+      {
+        "technique": "segmentation",
+        "case": "playable (teal disk) ×0.7",
+        "verdict": "HIT",
+        "dist": 0.009794684520184756,
+        "ms": 72
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "playable (teal disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.056639752289228865,
+        "ms": 3085
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "playable (teal disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.056639752289228865,
+        "ms": 420
+      },
+      {
+        "technique": "Hough circles",
+        "case": "playable (teal disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.06263018163266361,
+        "ms": 42
+      },
+      {
+        "technique": "segmentation",
+        "case": "playable (teal disk) ×1",
+        "verdict": "HIT",
+        "dist": 0.009792114695338607,
+        "ms": 39
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "playable (teal disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.022571736705273283,
+        "ms": 2663
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "playable (teal disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.022571736705273283,
+        "ms": 565
+      },
+      {
+        "technique": "Hough circles",
+        "case": "playable (teal disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.06262672273833592,
+        "ms": 55
+      },
+      {
+        "technique": "segmentation",
+        "case": "playable (teal disk) ×1.3",
+        "verdict": "HIT",
+        "dist": 0.03916292778778427,
+        "ms": 54
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "intro, other window ×0.7",
+        "verdict": "HIT",
+        "dist": 0.10444599366648324,
+        "ms": 4726
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro, other window ×0.7",
+        "verdict": "HIT",
+        "dist": 0.10444599366648324,
+        "ms": 298
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro, other window ×0.7",
+        "verdict": "HIT",
+        "dist": 0.1331177678807296,
+        "ms": 33
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro, other window ×0.7",
+        "verdict": "MISS",
+        "ms": 34
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "intro, other window ×1",
+        "verdict": "HIT",
+        "dist": 0.10444516852432191,
+        "ms": 118
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro, other window ×1",
+        "verdict": "HIT",
+        "dist": 0.10444516852432191,
+        "ms": 470
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro, other window ×1",
+        "verdict": "HIT",
+        "dist": 0.13311744281806956,
+        "ms": 54
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro, other window ×1",
+        "verdict": "MISS",
+        "ms": 46
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "intro, other window ×1.3",
+        "verdict": "HIT",
+        "dist": 0.10444472439938376,
+        "ms": 2679
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "intro, other window ×1.3",
+        "verdict": "HIT",
+        "dist": 0.10444472439938376,
+        "ms": 796
+      },
+      {
+        "technique": "Hough circles",
+        "case": "intro, other window ×1.3",
+        "verdict": "HIT",
+        "dist": 0.08853807985802802,
+        "ms": 58
+      },
+      {
+        "technique": "segmentation",
+        "case": "intro, other window ×1.3",
+        "verdict": "MISS",
+        "ms": 49
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "NEG playable, button covered",
+        "verdict": "OK-NONE",
+        "ms": 3605
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "NEG playable, button covered",
+        "verdict": "OK-NONE",
+        "ms": 3642
+      },
+      {
+        "technique": "Hough circles",
+        "case": "NEG playable, button covered",
+        "verdict": "OK-NONE",
+        "ms": 50
+      },
+      {
+        "technique": "segmentation",
+        "case": "NEG playable, button covered",
+        "verdict": "OK-NONE",
+        "ms": 45
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "NEG intro, top part only",
+        "verdict": "OK-NONE",
+        "ms": 1627
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "NEG intro, top part only",
+        "verdict": "OK-NONE",
+        "ms": 1662
+      },
+      {
+        "technique": "Hough circles",
+        "case": "NEG intro, top part only",
+        "verdict": "OK-NONE",
+        "ms": 25
+      },
+      {
+        "technique": "segmentation",
+        "case": "NEG intro, top part only",
+        "verdict": "OK-NONE",
+        "ms": 17
+      },
+      {
+        "technique": "template ZNCC",
+        "case": "NEG side artwork only",
+        "verdict": "OK-NONE",
+        "ms": 6627
+      },
+      {
+        "technique": "template seeded by Hough",
+        "case": "NEG side artwork only",
+        "verdict": "OK-NONE",
+        "ms": 6717
+      },
+      {
+        "technique": "Hough circles",
+        "case": "NEG side artwork only",
+        "verdict": "OK-NONE",
+        "ms": 67
+      },
+      {
+        "technique": "segmentation",
+        "case": "NEG side artwork only",
+        "verdict": "OK-NONE",
+        "ms": 23
+      }
+    ],
+    "positives": 9,
+    "negatives": 3
+  },
+  "generatedAt": "2026-10-15T14:36:56.703Z",
+  "hudOcr": [
+    {
+      "region": "HUD band 20%",
+      "mode": "plain (contrast + invert)",
+      "CREDIT": "-",
+      "BET": "-",
+      "correct": "no",
+      "ms": 848
+    },
+    {
+      "region": "HUD band 20%",
+      "mode": "binarised ≥180",
+      "CREDIT": 99.9,
+      "BET": 2,
+      "correct": "YES",
+      "ms": 342
+    },
+    {
+      "region": "HUD band 20%",
+      "mode": "binarised ≥210",
+      "CREDIT": 99.9,
+      "BET": 2,
+      "correct": "YES",
+      "ms": 215
+    },
+    {
+      "region": "HUD band 10%",
+      "mode": "plain (contrast + invert)",
+      "CREDIT": 99.9,
+      "BET": 0,
+      "correct": "no",
+      "ms": 259
+    },
+    {
+      "region": "HUD band 10%",
+      "mode": "binarised ≥180",
+      "CREDIT": 99,
+      "BET": 2,
+      "correct": "no",
+      "ms": 231
+    },
+    {
+      "region": "HUD band 10%",
+      "mode": "binarised ≥210",
+      "CREDIT": 99.9,
+      "BET": 2,
+      "correct": "YES",
+      "ms": 130
+    }
+  ],
+  "motion": [
+    {
+      "pair": "same frame",
+      "diff": 0
+    },
+    {
+      "pair": "recompressed (noise)",
+      "diff": 0
+    },
+    {
+      "pair": "1–2 px jitter",
+      "diff": 0.021128472222222222
+    },
+    {
+      "pair": "intro → playable (real change)",
+      "diff": 0.24852430555555555
+    }
+  ]
+}
