@@ -1,0 +1,164 @@
+# Intelligent Game Validation — everything the project does, proven in CI.
+#
+#  1. offline  (GitHub-hosted, EVERY push and PR, no browser, no money)
+#       typecheck · unit tests on real game frames · vision benchmark + charts · summary on the run page
+#  2. live     (self-hosted runner in Spain with Brave, started BY HAND: Actions → this workflow → "Run workflow",
+#               tick "live"). Runs `npm run all`: scenario 1 (real spin, minimum wager), scenario 2 (account without
+#               balance), spin series, and the report demo that fails ON PURPOSE. ⚠ real money (minimum wager).
+#  3. pages    (GitHub-hosted, main only) publishes one site with all of it to GitHub Pages.
+#
+# One-time setup (repository Settings):
+#  - Pages → Source: "GitHub Actions".
+#  - Environments → "betsson-es" → secrets FUNDED_USER, FUNDED_PASS, EMPTY_USER, EMPTY_PASS, EXTRA_HTTP_HEADERS.
+#  - Actions → Runners → New self-hosted runner on a PC in Spain with Brave installed, label "brave-es". Run it as
+#    the logged-in user (./run.cmd), not as a service: Brave needs a desktop session to render the game.
+name: Intelligent Game Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: 'Run the live journeys on the self-hosted Brave runner (betsson.es, REAL money at the minimum wager)'
+        type: boolean
+        default: false
+      spins:
+        description: 'Spins in the spin series'
+        default: '5'
+      report_demo:
+        description: 'Include the report demo that fails on purpose'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: validation-${{ github.ref }}
+  cancel-in-progress: false # never cancel a run that may be mid-spin
+
+jobs:
+  offline:
+    name: Offline proof · typecheck, unit tests on real frames, vision benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Typecheck (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Unit tests (real game frames, money rules, step runner, failures-only report)
+        run: npx playwright test --project=unit --reporter=list,json,html
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: out/unit.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: out/unit-report
+          PLAYWRIGHT_HTML_OPEN: never
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Vision benchmark (template ZNCC vs Hough vs segmentation, HUD OCR, motion) + charts
+        run: |
+          pip install -r scripts/bench-vision-requirements.txt
+          node scripts/bench-vision.cjs
+          mkdir -p out/vision && cp docs/vision-approaches/*.png docs/vision-approaches/results.json out/vision/
+        env:
+          PYTHON: python
+
+      - name: Summary on the run page
+        if: always()
+        run: node scripts/ci-summary.cjs offline
+
+      - name: Upload offline results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline
+          path: out
+          retention-days: 30
+
+  live:
+    name: Live proof · betsson.es with Brave (npm run all)
+    if: github.event_name == 'workflow_dispatch' && inputs.live
+    runs-on: [self-hosted, brave-es]
+    environment: betsson-es
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+
+      - name: Write .env from secrets (never printed)
+        run: node scripts/ci-write-env.cjs
+        env:
+          FUNDED_USER: ${{ secrets.FUNDED_USER }}
+          FUNDED_PASS: ${{ secrets.FUNDED_PASS }}
+          EMPTY_USER: ${{ secrets.EMPTY_USER }}
+          EMPTY_PASS: ${{ secrets.EMPTY_PASS }}
+          EXTRA_HTTP_HEADERS: ${{ secrets.EXTRA_HTTP_HEADERS }}
+          GAME_SLUG: ${{ vars.GAME_SLUG }}
+
+      - name: npm run all (scenario 1 · scenario 2 · spin series · report demo) — each in a fresh Brave
+        run: npm run all ${{ !inputs.report_demo && '-- --no-report-demo' || '' }}
+        env:
+          SPINS: ${{ inputs.spins }}
+          MAX_BET: '0.10'
+
+      - name: Summary on the run page
+        if: always()
+        run: node scripts/ci-summary.cjs live
+
+      - name: 'Upload live report (traces excluded, they record session cookies)'
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live
+          path: |
+            site
+            !site/**/*.zip
+          retention-days: 30
+
+      - name: Remove .env
+        if: always()
+        run: node scripts/ci-write-env.cjs --remove
+
+  pages:
+    name: Publish everything to GitHub Pages
+    needs: [offline, live]
+    if: always() && needs.offline.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: offline
+          path: offline
+      - uses: actions/download-artifact@v4
+        if: needs.live.result != 'skipped'
+        continue-on-error: true
+        with:
+          name: live
+          path: live
+      - name: Build the site (offline results, vision charts, live report)
+        run: node scripts/ci-site.cjs offline live
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -203,16 +203,33 @@ Design choices:
 - Brave window, fixed size 1600×1000, scale 1 for stable OCR. Cookies: "reject all" (OneTrust).
 - Spanish OCR data ships as an npm package (`@tesseract.js-data/spa`) → no CDN download at runtime.
 
-## GitHub Actions
+## GitHub Actions — everything, proven in CI
 
-`.github/workflows/game-validation.yml` runs both scenarios, builds the report and publishes it to **GitHub Pages**
-(also as an artifact) with a summary table in the job page.
+Workflow: **`.github/workflows/validation.yml`** (Actions tab → "Intelligent Game Validation").
 
-1. Settings → Environments → `betsson-es` with secrets `FUNDED_USER`, `FUNDED_PASS`, `EMPTY_USER`, `EMPTY_PASS`.
-2. Settings → Pages → Source: **GitHub Actions**.
-3. **betsson.es only serves Spain**: GitHub-hosted runners exit from US IPs. Register a **self-hosted runner** on a
-   machine in Spain (Settings → Actions → Runners) and set repository variable `RUNNER_LABEL=self-hosted`.
-4. Optional variable `GAME_SLUG`.
+| Job | Runs on | When | What it proves |
+|---|---|---|---|
+| **offline** | GitHub-hosted (Ubuntu) | every push and pull request | Typecheck · all unit tests on **real game frames** (money parsing, HUD OCR, spin/bet buttons, pre-spin guard, atomic-step runner, failures-only report) · **vision benchmark** (template ZNCC vs Hough vs segmentation, HUD OCR preprocessing, motion) with its charts |
+| **live** | self-hosted runner in Spain with **Brave** (label `brave-es`) | **by hand**: Actions → *Run workflow* → tick **live** | `npm run all` on betsson.es: scenario 1 (real spin, minimum wager, balances reconciled), scenario 2 (account without balance: spin rejected, message in Spanish, balances unchanged), spin series, and the report demo that **fails on purpose**. ⚠ real money at the minimum wager |
+| **pages** | GitHub-hosted | after them, on `main` | Publishes **one site with all of it** to GitHub Pages: live report (or the last one committed in `site/`), unit-test report, vision charts |
+
+Every run also writes a **summary on the run page**: unit tests per file, the spin-button benchmark table (hits, false
+positives, error, speed), HUD OCR results, motion levels and, when the live job ran, the checks per journey.
+
+**Why live runs on a self-hosted runner:** betsson.es only serves Spain (GitHub's runners are in the US), Betsson's
+fraud detection rejects automated browsers (so the checker drives a real **Brave** window, which needs a desktop
+session), and it needs the test accounts.
+
+One-time setup (repository Settings):
+
+1. **Pages** → Source: **GitHub Actions**.
+2. **Environments** → `betsson-es` → secrets `FUNDED_USER`, `FUNDED_PASS`, `EMPTY_USER`, `EMPTY_PASS`,
+   `EXTRA_HTTP_HEADERS` (optional variable `GAME_SLUG`). They are written to a temporary `.env` during the live job
+   (never printed) and deleted at the end.
+3. **Actions → Runners** → *New self-hosted runner* on a PC in Spain with **Brave** installed, label **`brave-es`**.
+   Start it as the logged-in user (`./run.cmd`), not as a Windows service: Brave needs a desktop to render the game.
+
+Artifacts never include Playwright traces (`*.zip`): they record network requests, session cookies included.
 
 ## Safeguards
 
